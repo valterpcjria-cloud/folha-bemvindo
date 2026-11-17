@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="description" content="Sistema de RH Frimelo v4.38.28 - Gestão de Folha e Funcionários">
+    <meta name="keywords" content="RH, Folha de Pagamento, Frimelo, Gestão">
+    <meta name="theme-color" content="#050505">
+    <title>Sistema RH v4.38.28 - Frimelo</title>
+
+    <!-- Pre-load essential fonts and styles -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Outfit:wght@400;500;600;700&display=swap"
+        rel="stylesheet">
+
+    <!-- Configurações Globais -->
+    <script>
+        window.SYSTEM_ORIGIN = "HostGator";
+    </script>
+
+    <script>
+        // Global Error Trap for Production Diagnostics
+        window.onerror = function (msg, url, lineNo, columnNo, error) {
+            const display = document.getElementById('error-display');
+            if (display) {
+                display.style.display = 'block';
+                display.innerHTML = '<strong>FATAL_BOOT_ERROR:</strong> ' + msg + '<br><small>' + url + ' [L:' + lineNo + ']</small>';
+            }
+            return false;
+        };
+    </script>
+</head>
+
+<body class="bg-slate-900">
+    <!-- Failsafe visibility -->
+    <div id="error-display"
+        style="display:none; position:fixed; top:10px; left:10px; right:10px; background: rgba(220,38,38,0.9); color: white; padding: 15px; border-radius: 8px; z-index: 10000; font-family: monospace; font-size: 12px; border-left: 5px solid white;">
+    </div>
+    <div id="initial-loader"
+        style="position: fixed; inset: 0; background: #0f172a; display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 9999; font-family: 'Outfit', sans-serif;">
+
+        <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 2rem;">
+            <div
+                style="width: 32px; height: 32px; background: linear-gradient(to top right, #0284c7, #38bdf8); border-radius: 8px; display: flex; align-items: center; justify-content: center; font-weight: bold; color: white;">
+                F</div>
+            <h1 style="color: white; font-size: 20px; font-weight: 700; letter-spacing: 0.05em; margin: 0;">FRIMELO</h1>
+        </div>
+
+        <div
+            style="width: 140px; height: 2px; background: rgba(255,255,255,0.1); position: relative; overflow: hidden; border-radius: 4px;">
+            <div id="loader-bar"
+                style="position: absolute; inset: 0; background: #38bdf8; width: 0%; transition: width 0.5s cubic-bezier(0.4, 0, 0.2, 1); box-shadow: 0 0 10px rgba(56, 189, 248, 0.5);">
+            </div>
+        </div>
+        <p
+            style="margin-top: 1.5rem; color: #94a3b8; font-weight: 500; font-size: 11px; text-transform: uppercase; letter-spacing: 0.2em;">
+            Carregando Sistema...
+        </p>
+    </div>
+
+    <div id="root"></div>
+
+    <script type="module" src="/index.tsx"></script>
+    <script>
+        // Simple loader simulation
+        setTimeout(() => {
+            const bar = document.getElementById('loader-bar');
+            if (bar) bar.style.width = '100%';
+            setTimeout(() => {
+                const loader = document.getElementById('initial-loader');
+                if (loader) {
+                    loader.style.opacity = '0';
+                    loader.style.transition = 'opacity 0.8s ease';
+                    setTimeout(() => loader.remove(), 800);
+                }
+            }, 600);
+        }, 100);
+    </script>
+</body>
+
+</html>

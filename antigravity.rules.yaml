@@ -1,0 +1,91 @@
+workspace:
+  name: "Sistema Folha Pagamento"
+  version: "2.0"
+
+  backend:
+    framework: "php-rest"
+    language: "php"
+    version: "8.0+"
+    target: "hostgator-cpanel"
+    root_path: "public_html/api"
+
+  frontend:
+    framework: "vue3-spa"
+    build_tool: "vite"
+    language: "javascript"
+    target: "hostgator-cpanel"
+    root_path: "public_html/app/dist"
+
+  database:
+    engine: "mysql"
+    version: "5.7+"
+    charset: "utf8mb4"
+    collation: "utf8mb4_unicode_ci"
+    storage: "innodb"
+
+rules:
+  - name: "protect_event_codes"
+    applies_to: "backend"
+    priority: "critical"
+    match: "database/*|app/Http/Controllers/Eventos*|app/Models/EventosFolha*"
+    enforce:
+      - "Reserved codes: 883,88,719,907,1080,71,191,936,4004"
+      - "On UPDATE eventos_folha: if obrigatorio=1, block changes to codigo_evento"
+      - "On DELETE eventos_folha: if obrigatorio=1, return 403"
+      - "On POST eventos_folha: if codigo_evento in reserved, return 400"
+      - "Log attempts to modify reserved codes in logs_auditoria with acao=BLOCKED"
+
+  - name: "rest_api_structure"
+    applies_to: "backend"
+    enforce:
+      - "Prefix all endpoints with /api"
+      - "Use JSON for all request/response bodies"
+      - "Implement endpoints: /api/auth/login, /api/funcionarios, /api/eventos, /api/competencias, /api/lancamentos, /api/competencias/{id}/export/questor"
+      - "Use standard HTTP status codes (200,201,400,403,404)"
+
+  - name: "vue3_spa_conventions"
+    applies_to: "frontend"
+    enforce:
+      - "Use Vue 3 Composition API"
+      - "Use Vue Router with lazy-loaded routes"
+      - "Use Pinia for global state"
+      - "Implement routes: /login, /dashboard, /funcionarios, /eventos, /competencias, /competencias/:id/lancamentos, /competencias/:id/export"
+      - "Use Axios services in src/services/ to call /api endpoints"
+
+  - name: "hostgator_cpanel_deploy"
+    applies_to: "backend,frontend"
+    enforce:
+      - "Backend PHP in public_html/api"
+      - "Frontend build in public_html/app/dist"
+      - "Generate .htaccess for API routing and SPA history mode"
+      - "Use .env for DB credentials (not committed)"
+
+  - name: "mysql_schema_conventions"
+    applies_to: "backend"
+    match: "database/migrations/*|database/seeders/*"
+    enforce:
+      - "All tables use utf8mb4, utf8mb4_unicode_ci, InnoDB"
+      - "Primary keys are BIGINT UNSIGNED AUTO_INCREMENT"
+      - "Foreign keys use ON DELETE CASCADE/RESTRICT"
+      - "Seed must include 9 mandatory eventos_folha with reserved codes"
+
+  - name: "security_standards"
+    applies_to: "backend,frontend"
+    enforce:
+      - "Validate all inputs"
+      - "Hash passwords with bcrypt"
+      - "Prevent SQL injection, XSS"
+      - "Use HTTPS only"
+      - "Do not log sensitive data"
+      - "Use bcrypt for password hashing (min cost 10)"
+      - "Validate all API inputs"
+      - "Implement CORS for local development only"
+
+deployment_rules:
+  format: "deploy-frimelo-v{version}-LIQUID.zip"
+  components: [unified]
+  process:
+    - protocol: "MANDATORY: Always generate a single UNIFIED package containing both Frontend and Backend."
+    - frontend: "Build (npm run build) with base: './' for HostGator. Include dist/ content in root."
+    - backend: "Include backend/ folder in the root of the ZIP."
+    - naming: "Use versioned naming with -LIQUID suffix."

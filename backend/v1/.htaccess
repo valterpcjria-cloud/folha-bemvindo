@@ -1,0 +1,28 @@
+# Standard Rewrite Rule for API
+Options -Indexes
+RewriteEngine On
+RewriteBase /backend/v1/
+
+# Bloquear acesso direto a arquivos ocultos (.env, .git, etc)
+<FilesMatch "^\.">
+    Order allow,deny
+    Deny from all
+</FilesMatch>
+
+# v4.57.1 (SEGURANÇA): apenas o index.php (roteador com autenticação JWT) é acessível
+# diretamente. Scripts de manutenção/diagnóstico (create_saas_admin, pwd_reset,
+# setup_db, repair_schema, fix_*...) ficam bloqueados — eram executáveis sem login.
+# Arquivos em routes/, lib/, middleware/ continuam funcionando via include.
+<FilesMatch "\.php$">
+    Order allow,deny
+    Deny from all
+</FilesMatch>
+<FilesMatch "^index\.php$">
+    Order allow,deny
+    Allow from all
+</FilesMatch>
+
+# If the request is not for a real file or directory, redirect to index.php
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteRule ^(.*)$ index.php [QSA,L]

@@ -1,0 +1,34 @@
+# Configurações para HostGator / Apache
+<IfModule mod_mime.c>
+    AddType application/javascript .tsx
+    AddType application/javascript .ts
+</IfModule>
+
+# Nunca cachear index.html — evita FATAL_BOOT_ERROR após novo deploy
+<Files "index.html">
+    Header set Cache-Control "no-cache, no-store, must-revalidate"
+    Header set Pragma "no-cache"
+    Header set Expires 0
+</Files>
+
+# v4.57.1 (SEGURANÇA): ferramentas antigas de manutenção que versões anteriores
+# copiavam para a raiz do site — bloqueadas caso ainda existam no servidor.
+<FilesMatch "^(repair_schema|probe_paths|fix_indices|fix_holidays|test_db)\.php$">
+    Order allow,deny
+    Deny from all
+</FilesMatch>
+
+# Assets com hash no nome podem ser cacheados por longo período
+<FilesMatch "\.(js|css|woff2?|png|svg|ico)$">
+    Header set Cache-Control "public, max-age=31536000, immutable"
+</FilesMatch>
+
+<IfModule mod_rewrite.c>
+  RewriteEngine On
+  RewriteBase /
+  RewriteRule ^index\.html$ - [L]
+  RewriteCond %{REQUEST_FILENAME} !-f
+  RewriteCond %{REQUEST_FILENAME} !-d
+  RewriteCond %{REQUEST_URI} !^/backend/
+  RewriteRule . /index.html [L]
+</IfModule>

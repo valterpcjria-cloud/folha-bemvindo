@@ -1,0 +1,23 @@
+
+> folha-frimelo@4.44.0 build
+> vite build
+
+vite v6.4.1 building for production...
+transforming...
+✓ 36 modules transformed.
+✗ Build failed in 1.87s
+error during build:
+[vite]: Rollup failed to resolve import "exceljs" from "/home/valterpcjria/FOLHA FRIMELO/views/ExportView.tsx".
+This is most likely unintended because it can break your application at runtime.
+If you do want to externalize this module explicitly add it to
+`build.rollupOptions.external`
+    at viteLog (file:///home/valterpcjria/FOLHA%20FRIMELO/node_modules/vite/dist/node/chunks/dep-D4NMHUTW.js:46374:15)
+    at file:///home/valterpcjria/FOLHA%20FRIMELO/node_modules/vite/dist/node/chunks/dep-D4NMHUTW.js:46432:18
+    at onwarn (file:///home/valterpcjria/FOLHA%20FRIMELO/node_modules/@vitejs/plugin-react/dist/index.js:90:7)
+    at file:///home/valterpcjria/FOLHA%20FRIMELO/node_modules/vite/dist/node/chunks/dep-D4NMHUTW.js:46430:7
+    at onRollupLog (file:///home/valterpcjria/FOLHA%20FRIMELO/node_modules/vite/dist/node/chunks/dep-D4NMHUTW.js:46422:5)
+    at onLog (file:///home/valterpcjria/FOLHA%20FRIMELO/node_modules/vite/dist/node/chunks/dep-D4NMHUTW.js:46072:7)
+    at file:///home/valterpcjria/FOLHA%20FRIMELO/node_modules/rollup/dist/es/shared/node-entry.js:20955:32
+    at Object.logger [as onLog] (file:///home/valterpcjria/FOLHA%20FRIMELO/node_modules/rollup/dist/es/shared/node-entry.js:22942:9)
+    at ModuleLoader.handleInvalidResolvedId (file:///home/valterpcjria/FOLHA%20FRIMELO/node_modules/rollup/dist/es/shared/node-entry.js:21686:26)
+    at file:///home/valterpcjria/FOLHA%20FRIMELO/node_modules/rollup/dist/es/shared/node-entry.js:21644:26
