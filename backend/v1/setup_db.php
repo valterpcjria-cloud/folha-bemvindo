@@ -224,16 +224,8 @@ try {
 
     echo "<span style='color:green;'>✔</span> Eventos obrigatórios sincronizados (IDs fixos).<br>";
 
-    // Inserir Usuário Administrador Padrão (Se não existir)
-    $count_user = $conn->query("SELECT COUNT(*) FROM usuarios WHERE email = 'admin@empresa.com.br'")->fetchColumn();
-    if ($count_user == 0) {
-        $senha_default = 'admin123';
-        $hash = password_hash($senha_default, PASSWORD_DEFAULT);
-        $sql_seed_user = "INSERT INTO usuarios (nome, email, senha_hash, perfil, ativo) VALUES ('Administrador', 'admin@empresa.com.br', ?, 'ADMIN', 1)";
-        $stmt_user = $conn->prepare($sql_seed_user);
-        $stmt_user->execute([$hash]);
-        echo "<span style='color:green;'>✔</span> Usuário Administrador criado: admin@empresa.com.br / admin123<br>";
-    }
+    // Bem Vindo: removido o usuário padrão admin@empresa.com.br / admin123 (senha fixa conhecida).
+    // O primeiro SUPERADMIN é criado pelo script de linha de comando criar_superadmin.php, com senha temporária.
 
     echo "<h4 style='color: #059669; margin-top:20px;'>Configuração concluída com sucesso!</h4>";
     echo "<a href='/' style='display:inline-block; padding: 10px 20px; background:#2563eb; color:white; text-decoration:none; border-radius:5px;'>Acessar o Sistema</a>";
