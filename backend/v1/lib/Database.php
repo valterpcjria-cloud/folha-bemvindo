@@ -33,7 +33,12 @@ class Database
     public static function getEnv(string $key, $default = null)
     {
         self::loadEnv();
-        return self::$config[$key] ?? $default;
+        if (array_key_exists($key, self::$config)) {
+            return self::$config[$key];
+        }
+        // Bem Vindo (Docker): sem arquivo .env, as configurações vêm das variáveis de ambiente do container
+        $valor = getenv($key);
+        return $valor !== false ? $valor : $default;
     }
 
     public static function connect()
@@ -44,10 +49,10 @@ class Database
 
         self::loadEnv();
 
-        $host = self::$config['DB_HOST'] ?? 'localhost';
-        $db_name = self::$config['DB_NAME'] ?? '';
-        $username = self::$config['DB_USER'] ?? '';
-        $password = self::$config['DB_PASS'] ?? '';
+        $host = self::getEnv('DB_HOST', 'localhost');
+        $db_name = self::getEnv('DB_NAME', '');
+        $username = self::getEnv('DB_USER', '');
+        $password = self::getEnv('DB_PASS', '');
         $charset = 'utf8mb4';
 
         if (!$db_name || !$username) {

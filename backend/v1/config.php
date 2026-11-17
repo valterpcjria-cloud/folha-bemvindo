@@ -17,6 +17,12 @@ $allowed_origins = [
     'http://app.frimelo.com.br',
 ];
 
+// Bem Vindo (Docker): endereço oficial do sistema vem da variável APP_ORIGIN (ex.: https://bemvindo.luzitec.cnt.br)
+$appOrigin = getenv('APP_ORIGIN');
+if ($appOrigin) {
+    $allowed_origins[] = rtrim($appOrigin, '/');
+}
+
 // Adiciona origens de desenvolvimento apenas se APP_ENV=dev no .env
 $appEnv = $_ENV['APP_ENV'] ?? getenv('APP_ENV') ?? 'production';
 if ($appEnv === 'dev' || $appEnv === 'development') {

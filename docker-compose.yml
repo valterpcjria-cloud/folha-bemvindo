@@ -1,0 +1,70 @@
+# FOLHA BEM VINDO — aplicação + banco próprio (MariaDB), isolados do CRM que roda na mesma VPS.
+# Na VPS fica em /opt/bemvindo. Senhas e chaves ficam no arquivo .env ao lado (nunca no git).
+#
+# A aplicação só escuta em 127.0.0.1:8090 — quem fala com a internet é o Caddy da VPS (HTTPS).
+# O banco não abre porta nenhuma: só a aplicação enxerga, pela rede interna do compose.
+
+name: bemvindo
+
+services:
+  app:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile
+    image: folha-bemvindo:${IMAGEM_TAG:-producao}
+    container_name: bemvindo-app
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    ports:
+      - "127.0.0.1:${APP_PORTA:-8090}:80"
+    environment:
+      DB_HOST: db
+      DB_NAME: ${DB_NAME}
+      DB_USER: ${DB_USER}
+      DB_PASS: ${DB_PASS}
+      JWT_SECRET: ${JWT_SECRET}
+      SETUP_KEY: ${SETUP_KEY}
+      APP_ENV: ${APP_ENV:-production}
+      APP_ORIGIN: ${APP_ORIGIN}
+      TZ: America/Sao_Paulo
+    volumes:
+      - logs:/var/www/html/backend/v1/sys_logs
+    mem_limit: 512m
+    networks: [interna]
+
+  db:
+    image: mariadb:11.4
+    container_name: bemvindo-db
+    restart: unless-stopped
+    environment:
+      MARIADB_DATABASE: ${DB_NAME}
+      MARIADB_USER: ${DB_USER}
+      MARIADB_PASSWORD: ${DB_PASS}
+      MARIADB_ROOT_PASSWORD: ${DB_ROOT_PASS}
+      TZ: America/Sao_Paulo
+    command:
+      - --character-set-server=utf8mb4
+      - --collation-server=utf8mb4_unicode_ci
+      - --innodb-buffer-pool-size=192M
+      - --max-connections=60
+    volumes:
+      - dados:/var/lib/mysql
+      # Roda SÓ na primeira vez (banco vazio): estrutura + tabelas de configuração
+      - ./docker/banco:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+    mem_limit: 512m
+    networks: [interna]
+
+volumes:
+  dados:
+  logs:
+
+networks:
+  interna:
