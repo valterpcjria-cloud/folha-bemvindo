@@ -3,6 +3,22 @@
 Fork da Folha Frimelo (base v4.58.1) para o Supermercado Bem Vindo. A numeração recomeça em 1.0.0.
 O histórico da Frimelo continua abaixo, a partir de [4.58.1].
 
+## [1.1.0] - 2026-11-18
+
+### Adicionado
+- **Etiquetas na matriz de lançamentos** (protótipo do DP), só informativas: nível (escolaridade), aniversariante no mês da competência e admissão no mês com os dias do salário proporcional (a proporcionalidade já era calculada na rubrica 33).
+- **Atestado em dias**: com o atestado marcado aparece o campo de dias (1 a 31), gravado na competência. A regra da Assiduidade não muda (basta existir o atestado). Em competência fechada aparece só a etiqueta.
+- **Backup diário do banco na VPS** (02:30, separado do backup do CRM): 14 dias na VPS e 30 dias no Google Drive criptografado. Scripts e restauração em `docker/vps/`.
+
+### Alterado
+- Funcionário novo começa com **insalubridade e assiduidade em 0%** (na Frimelo eram 20% e 11%). Cadastros existentes não mudam.
+
+### Segurança
+- `POST /atestados` confere se funcionário e competência são da empresa e recusa competência FECHADA (409).
+
+### Banco de Dados
+- `docker/banco/11_bv_atestado_dias.sql` (coluna `competencia_atestados.dias`) e `docker/banco/12_bv_padrao_insalubridade_zero.sql` (padrão 0 das colunas). Idempotentes; rodar antes de trocar a imagem.
+
 ## [1.0.0] - 2026-11-18
 
 ### Adicionado
