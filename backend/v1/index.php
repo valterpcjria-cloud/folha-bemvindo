@@ -161,9 +161,14 @@ $router->add('stats', function () use ($conn, $authUser) {
     require_once 'routes/stats.php';
 });
 
-// Rota: Cargos
-$router->add('cargos', function () use ($conn, $authUser) {
+// Rota: Cargos (Bem Vindo: por empresa, com setor e hierarquia)
+$router->add('cargos', function () use ($conn, $authUser, $route_parts) {
     require_once 'routes/cargos.php';
+});
+
+// Rota: Setores (Bem Vindo, Fase A.1)
+$router->add('setores', function () use ($conn, $authUser, $route_parts) {
+    require_once 'routes/setores.php';
 });
 
 // Rota: Dependentes

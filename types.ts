@@ -51,6 +51,49 @@ export interface Funcionario {
   emprestimo_consignado?: number;   // v4.52.20: valor fixo R$ empréstimo consignado
   dep_ir?: number;                  // v4.53.x: número de dependentes para dedução IRRF
   gratificacao?: number;            // v4.53.10: valor fixo R$ gratificação
+  // Bem Vindo (Fase A.1): setor/hierarquia, dados pessoais e pagamento
+  data_demissao?: string;
+  tipo_contrato?: TipoContrato;
+  id_setor?: number | null;
+  id_cargo?: number | null;
+  setor_nome?: string | null;       // somente leitura (GET)
+  setor_ordem?: number | null;      // somente leitura (GET)
+  cargo_ordem?: number | null;      // somente leitura (GET): 1 = topo da hierarquia
+  data_nascimento?: string | null;
+  sexo?: 'F' | 'M' | 'O' | null;
+  escolaridade?: string | null;
+  modalidade_pagamento?: ModalidadePagamento | null; // só vem para ADMIN/RH
+  banco?: string | null;
+  agencia?: string | null;
+  conta?: string | null;
+  tipo_conta?: 'CORRENTE' | 'POUPANCA' | 'SALARIO' | null;
+  chave_pix?: string | null;
+}
+
+export type TipoContrato = 'CLT' | 'PJ' | 'ESTAGIO' | 'OUTRO';
+export type ModalidadePagamento = 'BANCO' | 'PIX' | 'LOJA';
+
+/** Bem Vindo (Fase A.1): setor da empresa; ordem = ordem dos blocos na matriz do DP */
+export interface Setor {
+  id: number;
+  nome: string;
+  ordem: number;
+  ativo: number | boolean;
+  qtd_funcionarios?: number;
+  qtd_cargos?: number;
+}
+
+/** Bem Vindo (Fase A.1): cargo dentro do setor; ordem_hierarquia 1 = topo */
+export interface Cargo {
+  id: number;
+  nome: string;
+  cbo?: string | null;
+  piso_salarial?: number | null;
+  ativo: number | boolean;
+  id_setor: number | null;
+  setor_nome?: string | null;
+  ordem_hierarquia: number;
+  qtd_funcionarios?: number;
 }
 
 export interface EventoFolha {

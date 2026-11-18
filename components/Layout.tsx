@@ -19,7 +19,8 @@ import {
   Building2,
   Variable,
   Download,
-  BookOpen
+  BookOpen,
+  Layers
 } from 'lucide-react';
 import { NavLink, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
@@ -52,6 +53,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
   const menuItems = [
     { path: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
     { path: '/funcionarios', label: 'Funcionários', icon: Users },
+    { path: '/setores', label: 'Setores e Cargos', icon: Layers }, // Bem Vindo (Fase A.1)
     { path: '/lancamentos', label: 'Lançamentos', icon: Calculator },
     { path: '/eventos', label: 'Eventos', icon: Settings },
     { path: '/competencias', label: 'Competências', icon: CalendarDays },

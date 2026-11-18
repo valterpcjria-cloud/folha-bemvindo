@@ -1,15 +1,20 @@
 import React, { useState, useEffect } from 'react';
 import { Plus, Search, Edit2, Trash2, X, User, CalendarDays, ChevronLeft, ChevronRight, DollarSign, Percent, Lock } from 'lucide-react';
-import { Funcionario, StatusFuncionario } from '../types';
+import { Funcionario, StatusFuncionario, Setor, Cargo } from '../types';
 import { api } from '../services/mockApi';
 import { useAuth } from '../contexts/AuthContext';
 import { DEFAULT_COMPANY_CODE, DEFAULT_LOCATION, DEFAULT_DEPARTMENT } from '../constants/payroll';
 import ConfirmModal from '../components/ConfirmModal';
 import { maskBRL, parseBRL, formatBRL } from '../utils/currency';
+import CadastroBemVindoFields from '../components/employees/CadastroBemVindoFields';
+import PagamentoFields from '../components/employees/PagamentoFields';
 
 const EmployeesView: React.FC = () => {
-  const { selectedCompanyId } = useAuth();
+  const { selectedCompanyId, user } = useAuth();
+  const podeVerPagamento = ['SUPERADMIN', 'ADMIN', 'RH'].includes(user?.perfil ?? ''); // Bem Vindo: dado restrito
   const [employees, setEmployees] = useState<Funcionario[]>([]);
+  const [setores, setSetores] = useState<Setor[]>([]); // Bem Vindo (Fase A.1)
+  const [cargos, setCargos] = useState<Cargo[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [isLoading, setIsLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
@@ -27,8 +32,10 @@ const EmployeesView: React.FC = () => {
   const loadEmployees = async () => {
     try {
       setIsLoading(true);
-      const data = await api.getFuncionarios();
+      const [data, s, c] = await Promise.all([api.getFuncionarios(), api.getSetores(), api.getCargos()]);
       setEmployees(data);
+      setSetores(s);
+      setCargos(c);
     } catch (error: any) {
       console.error("Erro ao carregar funcionários:", error);
       alert("Erro ao carregar a lista de funcionários. Verifique a conexão com o servidor.");
@@ -55,7 +62,9 @@ const EmployeesView: React.FC = () => {
       adic_tempo_servico_perc: 0,
       mensalidade_sindical: 0,
       emprestimo_consignado: 0,
-      gratificacao: 0
+      gratificacao: 0,
+      tipo_contrato: 'CLT',
+      modalidade_pagamento: 'BANCO'
     });
     setShowModal(true);
   };
@@ -187,7 +196,8 @@ const EmployeesView: React.FC = () => {
                     </div>
                   </td>
                   <td className="px-6 py-4">
-                    <span className="text-sm text-slate-600">{emp.cargo || 'Não informado'}</span>
+                    <span className="block text-sm text-slate-600">{emp.cargo || 'Não informado'}</span>
+                    {emp.setor_nome && <span className="block text-[11px] text-slate-400">{emp.setor_nome}</span>}
                   </td>
                   <td className="px-6 py-4 text-right">
                     {emp.salario_base ? (
@@ -541,29 +551,33 @@ const EmployeesView: React.FC = () => {
                   />
                 </div>
                 <div className="space-y-2">
-                  <label className="text-sm font-medium text-slate-700">Cargo</label>
-                  <input
-                    type="text"
-                    className="input-clean"
-                    placeholder="Ex: Analista"
-                    value={editingEmployee?.cargo}
-                    onChange={(e) => setEditingEmployee(p => ({ ...p!, cargo: e.target.value }))}
-                  />
+                  <label className="text-sm font-medium text-slate-700">Data de Admissão</label>
+                  <div className="relative">
+                    <CalendarDays className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
+                    <input
+                      type="date"
+                      className="input-clean pl-10"
+                      value={editingEmployee?.data_admissao || ''}
+                      onChange={(e) => setEditingEmployee(p => ({ ...p!, data_admissao: e.target.value }))}
+                    />
+                  </div>
                 </div>
               </div>
 
-              <div className="space-y-2">
-                <label className="text-sm font-medium text-slate-700">Data de Admissão</label>
-                <div className="relative">
-                  <CalendarDays className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
-                  <input
-                    type="date"
-                    className="input-clean pl-10"
-                    value={editingEmployee?.data_admissao || ''}
-                    onChange={(e) => setEditingEmployee(p => ({ ...p!, data_admissao: e.target.value }))}
-                  />
-                </div>
-              </div>
+              {/* Bem Vindo (Fase A.1): setor e cargo da hierarquia substituem o cargo digitado */}
+              <CadastroBemVindoFields
+                valor={editingEmployee ?? {}}
+                setores={setores}
+                cargos={cargos}
+                onChange={(patch) => setEditingEmployee(p => ({ ...p!, ...patch }))}
+              />
+
+              {podeVerPagamento && (
+                <PagamentoFields
+                  valor={editingEmployee ?? {}}
+                  onChange={(patch) => setEditingEmployee(p => ({ ...p!, ...patch }))}
+                />
+              )}
 
               <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
                 <div className="space-y-2">

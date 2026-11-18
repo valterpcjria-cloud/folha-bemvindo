@@ -29,6 +29,7 @@ const PaystubsManagementView = lazy(() => import('../views/PaystubsManagementVie
 const SuperAdminView = lazy(() => import('../views/SuperAdminView'));
 const LandingPageView = lazy(() => import('../views/LandingPageView'));
 const HolidaysView = lazy(() => import('../views/HolidaysView'));
+const SetoresView = lazy(() => import('../views/SetoresView')); // Bem Vindo (Fase A.1)
 const ManualView = lazy(() => import('../views/ManualView'));
 const ChangePasswordView = lazy(() => import('../views/ChangePasswordView'));
 
@@ -97,6 +98,7 @@ const AppRoutes: React.FC = () => {
                     <Route element={<Suspense fallback={<ViewLoading />}><Outlet /></Suspense>}>
                         <Route path="/dashboard" element={<DashboardView />} />
                         <Route path="/funcionarios" element={<EmployeesView />} />
+                        <Route path="/setores" element={<SetoresView />} />
                         <Route path="/eventos" element={<EventsView />} />
                         <Route path="/competencias" element={<CompetenceView />} />
                         <Route path="/folha" element={<PayrollGridView />} />

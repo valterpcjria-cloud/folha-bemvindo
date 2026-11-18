@@ -1,5 +1,5 @@
 
-import { Funcionario, EventoFolha, Competencia, Lancamento, StatusFuncionario, StatusCompetencia, AuditLog, Unidade, DsrCalculado, User } from '../types';
+import { Funcionario, EventoFolha, Competencia, Lancamento, StatusFuncionario, StatusCompetencia, AuditLog, Unidade, DsrCalculado, User, Setor, Cargo } from '../types';
 import { MANDATORY_EVENTS } from '../constants';
 import { CONFIG } from '../config';
 import { findValue } from '../utils/dataHelpers';
@@ -246,6 +246,29 @@ export const api = {
       method: 'POST',
       body: JSON.stringify({ funcionario_id: funcionarioId, competencia_id: competenciaId, tem_atestado: temAtestado })
     }),
+
+  // --- Setores e cargos (Bem Vindo, Fase A.1) ---
+  getSetores: async (): Promise<Setor[]> => {
+    if (CONFIG.IS_MOCK) return [];
+    const res = await fetchApi('/setores');
+    return (res?.data as Setor[]) ?? [];
+  },
+  criarSetor: (nome: string) => fetchApi('/setores', { method: 'POST', body: JSON.stringify({ nome }) }),
+  atualizarSetor: (id: number, data: { nome?: string; ativo?: boolean }) =>
+    fetchApi(`/setores/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
+  reordenarSetores: (ids: number[]) => fetchApi('/setores/reordenar', { method: 'POST', body: JSON.stringify({ ids }) }),
+
+  getCargos: async (): Promise<Cargo[]> => {
+    if (CONFIG.IS_MOCK) return [];
+    const res = await fetchApi('/cargos');
+    return (res?.data as Cargo[]) ?? [];
+  },
+  criarCargo: (data: { nome: string; id_setor: number | null; cbo?: string; piso_salarial?: number | null }) =>
+    fetchApi('/cargos', { method: 'POST', body: JSON.stringify(data) }),
+  atualizarCargo: (id: number, data: Partial<Pick<Cargo, 'nome' | 'cbo' | 'piso_salarial' | 'id_setor'>> & { ativo?: boolean }) =>
+    fetchApi(`/cargos/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
+  reordenarCargos: (ids: number[]) => fetchApi('/cargos/reordenar', { method: 'POST', body: JSON.stringify({ ids }) }),
+  excluirCargo: (id: number) => fetchApi(`/cargos/${id}`, { method: 'DELETE' }),
 
   // --- Feriados ---
   getHolidays: () => fetchApi('/feriados'),
