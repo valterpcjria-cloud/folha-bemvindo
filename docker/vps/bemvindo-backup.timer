@@ -1,0 +1,10 @@
+[Unit]
+Description=BEM VINDO: copia de seguranca todo dia as 02:30 (antes da do CRM, as 03:00)
+
+[Timer]
+OnCalendar=*-*-* 02:30:00
+Persistent=true
+RandomizedDelaySec=5min
+
+[Install]
+WantedBy=timers.target

@@ -1,0 +1,8 @@
+[Unit]
+Description=BEM VINDO: copia de seguranca diaria do banco da folha
+After=docker.service
+Requires=docker.service
+
+[Service]
+Type=oneshot
+ExecStart=/bin/sh -c "/opt/bemvindo/backup/fazer-backup.sh >> /opt/bemvindo/backup/backup.log 2>&1"
