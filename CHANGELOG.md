@@ -1,4 +1,36 @@
-# CHANGELOG - Folha Frimelo
+# CHANGELOG - Folha Bem Vindo
+
+Fork da Folha Frimelo (base v4.58.1) para o Supermercado Bem Vindo. A numeração recomeça em 1.0.0.
+O histórico da Frimelo continua abaixo, a partir de [4.58.1].
+
+## [1.0.0] - 2026-11-18
+
+### Adicionado
+- **Docker na VPS** (Hostinger, junto do CRM sem interferir): aplicação em `127.0.0.1:8090`, MariaDB 11.4 próprio em rede interna, Caddy com `bemvindo.luzitec.cnt.br`. Banco inicial em `docker/banco/` (estrutura + empresa + parâmetros 2026). Usuário SUPERADMIN criado por linha de comando (`docker/scripts/criar_superadmin.php`) com senha temporária.
+- **Setores e Cargos**: tela nova com os 8 setores da planilha, ordem dos blocos e hierarquia de cargos por setor (desativar em vez de excluir).
+- **Cadastro do funcionário**: setor/cargo da hierarquia, vínculo, nascimento, sexo, escolaridade e pagamento (banco/Pix/loja, visível só ADMIN e RH).
+- **Matriz de lançamentos por setor**: blocos na ordem dos setores, pessoas na ordem da hierarquia, subtotal por rubrica, total geral, recolher e filtrar setor; visão "Lista" mantida.
+- Rota `GET empresa_atual` (dados da empresa para cabeçalhos).
+
+### Alterado
+- Marca Frimelo → **Folha Bem Vindo** (login, menu, título, contracheque, exportação, manual). Contracheque lê razão social/CNPJ/cidade do cadastro da empresa.
+- Cookie de sessão `bemvindo_session`; CORS sem domínios da Frimelo.
+
+### Segurança
+- Rota de cargos exige ADMIN/RH e filtra por empresa (antes qualquer usuário criava/excluía, de qualquer empresa).
+- Empresa nova: senha temporária aleatória (antes a fixa `frimelo123`). Setup do banco não cria mais `admin123`.
+
+### Corrigido
+- Imagem Docker sem as extensões `calendar`, `gd` e `bcmath` (DSR dias úteis dava 500).
+- Consulta de feriados repetia o parâmetro `:uf` (HY093 com prepares nativos) — a tela caía no cálculo reserva.
+- PDF do contracheque saía "- -GO" (lia `cidade` em vez de `nome_cidade`).
+- Nome do cargo único no banco inteiro → único por empresa + setor.
+
+### Banco de Dados
+- `docker/banco/10_bv_setores_cargos_cadastro.sql` (idempotente; num banco novo roda sozinho).
+
+---
+
 
 ## [4.58.1] - 2026-10-01
 
