@@ -72,12 +72,13 @@ class DsrService
             AND (
                 (tipo = 'nacional') OR 
                 (tipo = 'estadual' AND uf = :uf) OR 
-                (tipo = 'municipal' AND (uf = :uf OR uf IS NULL) AND cidade = :cidade)
+                (tipo = 'municipal' AND (uf = :uf2 OR uf IS NULL) AND cidade = :cidade)
             )
             AND (empresa_id = :empresa_id OR empresa_id IS NULL)
         ";
         $stmt = $this->conn->prepare($sql);
-        $stmt->execute([':uf' => $uf, ':cidade' => $cidade, ':empresa_id' => $empresaId]);
+        // Bem Vindo: nome repetido (:uf duas vezes) dá HY093 com prepares nativos (EMULATE_PREPARES=false)
+        $stmt->execute([':uf' => $uf, ':uf2' => $uf, ':cidade' => $cidade, ':empresa_id' => $empresaId]);
         $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
         $feriados = [];
