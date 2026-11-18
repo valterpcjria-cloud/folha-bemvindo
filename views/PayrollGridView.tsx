@@ -10,7 +10,7 @@
  */
 
 import React, { useState, useEffect, useRef, useMemo } from 'react';
-import { CheckSquare, Square, ChevronLeft, ChevronRight } from 'lucide-react';
+import { CheckSquare, Square } from 'lucide-react';
 import { Funcionario, Lancamento } from '../types';
 import { CONFIG } from '../config';
 import PaystubView from './PaystubView';
@@ -22,6 +22,9 @@ import { usePayrollData } from '../hooks/usePayrollData';
 import PayrollHeader from './payroll/PayrollHeader';
 import PayrollControls from './payroll/PayrollControls';
 import PayrollTableRow from './payroll/PayrollTableRow';
+import PayrollPagination from './payroll/PayrollPagination';
+import PayrollGroupedBody from './payroll/PayrollGroupedBody';
+import { agruparPorSetor } from './payroll/agruparPorSetor';
 import { api } from '../services/mockApi';
 
 /**
@@ -31,6 +34,12 @@ import { api } from '../services/mockApi';
  * continuam vendo os dados normalmente.
  */
 const DEPRECATED_EVENT_CODES = new Set<number>([719, 883, 1080]);
+
+// Bem Vindo (Fase A.2): preferência de visão (por setor / lista) guardada só neste navegador
+const CHAVE_VISAO = 'bv_matriz_visao';
+const lerVisaoPorSetor = (): boolean => {
+  try { return localStorage.getItem(CHAVE_VISAO) !== 'lista'; } catch { return true; }
+};
 
 const PayrollGridView: React.FC = () => {
   // Hook customizado com toda lógica de dados
@@ -91,6 +100,20 @@ const PayrollGridView: React.FC = () => {
   const [selectedEmps, setSelectedEmps] = useState<Set<number>>(new Set());
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
+
+  // Bem Vindo (Fase A.2): matriz agrupada por setor (hierarquia + subtotais)
+  const [agrupar, setAgrupar] = useState<boolean>(lerVisaoPorSetor);
+  const [setorFiltro, setSetorFiltro] = useState('');
+  const [recolhidos, setRecolhidos] = useState<Set<string>>(new Set());
+  const mudarVisao = (v: boolean) => {
+    setAgrupar(v);
+    try { localStorage.setItem(CHAVE_VISAO, v ? 'setor' : 'lista'); } catch { /* sem storage: só não lembra */ }
+  };
+  const toggleGrupo = (chave: string) => setRecolhidos(prev => {
+    const n = new Set(prev);
+    if (n.has(chave)) n.delete(chave); else n.add(chave);
+    return n;
+  });
 
   // Estado para Paginação
   const [currentPage, setCurrentPage] = useState(1);
@@ -209,6 +232,34 @@ const PayrollGridView: React.FC = () => {
   const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
   const paginatedFuncionarios = filteredFuncionarios.slice(startIndex, startIndex + ITEMS_PER_PAGE);
 
+  // Visão por setor: sem paginação (o setor inteiro fica junto com o subtotal)
+  const todosGrupos = useMemo(() => agruparPorSetor(funcionarios), [funcionarios]);
+  const opcoesSetor = todosGrupos.map(g => ({ chave: g.chave, nome: g.nome }));
+  const gruposVisiveis = useMemo(() => {
+    const filtrados = new Set(filteredFuncionarios.map(f => f.id));
+    return todosGrupos
+      .filter(g => !setorFiltro || g.chave === setorFiltro)
+      .map(g => ({ ...g, funcionarios: g.funcionarios.filter(f => filtrados.has(f.id)) }))
+      .filter(g => g.funcionarios.length > 0);
+  }, [todosGrupos, filteredFuncionarios, setorFiltro]);
+
+  const renderRow = (func: Funcionario) => (
+    <PayrollTableRow
+      key={func.id}
+      funcionario={func}
+      eventos={visibleEventos}
+      lancamentos={lancamentos}
+      totals={totalsByFunc[func.id] || { proventos: 0, descontos: 0 }}
+      isSelected={selectedEmps.has(func.id)}
+      onToggleSelect={toggleSelect}
+      onUpdateLancamento={updateLancamento}
+      onViewPaystub={handleViewPaystub}
+      temAtestado={atestados.has(func.id)}
+      onToggleAtestado={toggleAtestado}
+      compAberta={isCompAberta}
+    />
+  );
+
   return (
     <div className="space-y-6 animate-in fade-in duration-500">
       <NotificationCenter notifications={notifications} onRemove={removeNotification} />
@@ -238,6 +289,11 @@ const PayrollGridView: React.FC = () => {
         onCompChange={handleCompChange}
         onBulkApply={handleBulkApply}
         onSearchChange={setSearchTerm}
+        agrupar={agrupar}
+        onAgruparChange={mudarVisao}
+        setores={opcoesSetor}
+        setorFiltro={setorFiltro}
+        onSetorFiltroChange={setSetorFiltro}
       />
 
       {/* Top Sync Scrollbar */}
@@ -278,92 +334,35 @@ const PayrollGridView: React.FC = () => {
                 </th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-100">
-              {paginatedFuncionarios.map(func => (
-                <PayrollTableRow
-                  key={func.id}
-                  funcionario={func}
-                  eventos={visibleEventos}
-                  lancamentos={lancamentos}
-                  totals={totalsByFunc[func.id] || { proventos: 0, descontos: 0 }}
-                  isSelected={selectedEmps.has(func.id)}
-                  onToggleSelect={toggleSelect}
-                  onUpdateLancamento={updateLancamento}
-                  onViewPaystub={handleViewPaystub}
-                  temAtestado={atestados.has(func.id)}
-                  onToggleAtestado={toggleAtestado}
-                  compAberta={isCompAberta}
-                />
-              ))}
-            </tbody>
+            {agrupar ? (
+              <PayrollGroupedBody
+                grupos={gruposVisiveis}
+                eventos={visibleEventos}
+                lancamentos={lancamentos}
+                totalsByFunc={totalsByFunc}
+                recolhidos={recolhidos}
+                onToggleGrupo={toggleGrupo}
+                renderRow={renderRow}
+                rotuloTotal={searchTerm || setorFiltro ? 'Total do que está na tela' : 'Total geral'}
+              />
+            ) : (
+              <tbody className="divide-y divide-slate-100">
+                {paginatedFuncionarios.map(renderRow)}
+              </tbody>
+            )}
           </table>
         </div>
 
-        {/* Componente de Paginação */}
-        {totalPages > 1 && (
-          <div className="bg-slate-50 px-6 py-4 border-t border-slate-200 flex flex-col sm:flex-row items-center justify-between gap-4">
-            <div className="text-sm text-slate-500">
-              Mostrando <span className="font-semibold text-slate-700">{startIndex + 1}</span> até <span className="font-semibold text-slate-700">{Math.min(startIndex + ITEMS_PER_PAGE, filteredFuncionarios.length)}</span> de <span className="font-semibold text-slate-700">{filteredFuncionarios.length}</span> registros
-            </div>
-
-            <div className="flex items-center gap-2">
-              <button
-                onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
-                disabled={currentPage === 1}
-                className="p-2 rounded-lg bg-white border border-slate-200 text-slate-600 hover:bg-slate-50 hover:text-blue-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors shadow-sm"
-              >
-                <ChevronLeft size={18} />
-              </button>
-
-              <div className="flex items-center gap-1">
-                {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
-                  let pageNum;
-                  if (totalPages <= 5) {
-                    pageNum = i + 1;
-                  } else if (currentPage <= 3) {
-                    pageNum = i + 1;
-                  } else if (currentPage >= totalPages - 2) {
-                    pageNum = totalPages - 4 + i;
-                  } else {
-                    pageNum = currentPage - 2 + i;
-                  }
-
-                  return (
-                    <button
-                      key={pageNum}
-                      onClick={() => setCurrentPage(pageNum)}
-                      className={`w-9 h-9 flex items-center justify-center rounded-lg text-sm font-semibold transition-all ${currentPage === pageNum
-                        ? 'bg-blue-600 text-white shadow-md shadow-blue-200'
-                        : 'bg-white text-slate-600 border border-slate-200 hover:bg-slate-50 hover:text-blue-600 shadow-sm'
-                        }`}
-                    >
-                      {pageNum}
-                    </button>
-                  );
-                })}
-
-                {totalPages > 5 && currentPage < totalPages - 2 && (
-                  <>
-                    <span className="text-slate-400 px-1">...</span>
-                    <button
-                      onClick={() => setCurrentPage(totalPages)}
-                      className="w-9 h-9 flex items-center justify-center rounded-lg bg-white border border-slate-200 text-sm font-semibold text-slate-600 hover:bg-slate-50 hover:text-blue-600 transition-all shadow-sm"
-                    >
-                      {totalPages}
-                    </button>
-                  </>
-                )}
-              </div>
-
-              <button
-                onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
-                disabled={currentPage === totalPages}
-                className="p-2 rounded-lg bg-white border border-slate-200 text-slate-600 hover:bg-slate-50 hover:text-blue-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors shadow-sm"
-              >
-                <ChevronRight size={18} />
-              </button>
-            </div>
-          </div>
+        {/* Paginação só na visão em lista */}
+        {!agrupar && (
+          <PayrollPagination
+            currentPage={currentPage}
+            totalPages={totalPages}
+            startIndex={startIndex}
+            itemsPerPage={ITEMS_PER_PAGE}
+            totalItems={filteredFuncionarios.length}
+            onPageChange={setCurrentPage}
+          />
         )}
       </div>
 

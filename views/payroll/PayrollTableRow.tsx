@@ -160,7 +160,11 @@ const PayrollTableRow: React.FC<PayrollTableRowProps> = ({
                 <div className="flex items-center justify-between">
                     <div className="flex flex-col gap-1">
                         <span className="font-medium text-slate-800">{funcionario.nome}</span>
-                        <span className="text-[10px] text-slate-400 font-mono">MAT: {funcionario.id_contrato}</span>
+                        <span className="text-[10px] text-slate-400 font-mono">
+                            MAT: {funcionario.id_contrato}
+                            {/* Bem Vindo (Fase A.2): cargo visível para conferir a hierarquia do setor */}
+                            {funcionario.cargo && <span className="font-sans text-slate-500"> · {funcionario.cargo}</span>}
+                        </span>
                         {/* v4.54.0: Atestado — zera Assiduidade (833) na competência. Só em comp aberta. */}
                         {compAberta && (
                             <button

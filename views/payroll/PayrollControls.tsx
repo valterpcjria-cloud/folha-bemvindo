@@ -4,7 +4,7 @@
  */
 
 import React from 'react';
-import { Search } from 'lucide-react';
+import { Search, Layers, List } from 'lucide-react';
 import { Competencia } from '../../types';
 
 interface PayrollControlsProps {
@@ -15,6 +15,12 @@ interface PayrollControlsProps {
     onCompChange: (compId: number) => void;
     onBulkApply: () => void;
     onSearchChange: (term: string) => void;
+    // Bem Vindo (Fase A.2): matriz por setor
+    agrupar: boolean;
+    onAgruparChange: (v: boolean) => void;
+    setores: { chave: string; nome: string }[];
+    setorFiltro: string;
+    onSetorFiltroChange: (chave: string) => void;
 }
 
 const PayrollControls: React.FC<PayrollControlsProps> = ({
@@ -24,7 +30,12 @@ const PayrollControls: React.FC<PayrollControlsProps> = ({
     searchTerm,
     onCompChange,
     onBulkApply,
-    onSearchChange
+    onSearchChange,
+    agrupar,
+    onAgruparChange,
+    setores,
+    setorFiltro,
+    onSetorFiltroChange,
 }) => {
     return (
         <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm flex flex-col md:flex-row items-center justify-between gap-6 sticky top-0 z-30">
@@ -65,6 +76,31 @@ const PayrollControls: React.FC<PayrollControlsProps> = ({
                 )}
             </div>
 
+            <div className="flex flex-col sm:flex-row items-stretch sm:items-end gap-3 w-full md:w-auto">
+            {/* Bem Vindo (Fase A.2): visão por setor (com subtotais) ou lista simples */}
+            <div className="space-y-1">
+                <span className="text-xs font-bold text-slate-500 uppercase tracking-wide">Visão</span>
+                <div role="group" aria-label="Visão da matriz" className="flex rounded-lg border border-slate-200 overflow-hidden text-xs font-semibold">
+                    <button type="button" aria-pressed={agrupar} onClick={() => onAgruparChange(true)}
+                        className={`flex items-center gap-1.5 px-3 py-2 ${agrupar ? 'bg-sky-600 text-white' : 'bg-white text-slate-600 hover:bg-slate-50'}`}>
+                        <Layers size={14} /> Por setor
+                    </button>
+                    <button type="button" aria-pressed={!agrupar} onClick={() => onAgruparChange(false)}
+                        className={`flex items-center gap-1.5 px-3 py-2 border-l border-slate-200 ${!agrupar ? 'bg-sky-600 text-white' : 'bg-white text-slate-600 hover:bg-slate-50'}`}>
+                        <List size={14} /> Lista
+                    </button>
+                </div>
+            </div>
+            {agrupar && (
+                <div className="space-y-1">
+                    <label htmlFor="matriz-setor" className="text-xs font-bold text-slate-500 uppercase tracking-wide">Setor</label>
+                    <select id="matriz-setor" className="input-clean text-sm min-w-[180px]" value={setorFiltro} onChange={(e) => onSetorFiltroChange(e.target.value)}>
+                        <option value="">Todos os setores</option>
+                        {setores.map(s => <option key={s.chave} value={s.chave}>{s.nome}</option>)}
+                    </select>
+                </div>
+            )}
+
             {/* Busca */}
             <div className="relative w-full md:w-64">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
@@ -75,6 +111,7 @@ const PayrollControls: React.FC<PayrollControlsProps> = ({
                     value={searchTerm}
                     onChange={(e) => onSearchChange(e.target.value)}
                 />
+            </div>
             </div>
         </div>
     );
