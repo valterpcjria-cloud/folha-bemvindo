@@ -14,8 +14,13 @@ RUN npx vite build
 FROM php:8.3-apache
 
 ENV TZ=America/Sao_Paulo
+# Extensões que a Hostgator já tinha e a imagem oficial não traz:
+#   calendar = DSR/feriados (cal_days_in_month, easter_date) · gd = imagens nos PDFs (TCPDF) · bcmath = códigos de barras (TCPDF)
 RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone \
-    && docker-php-ext-install pdo_mysql \
+    && apt-get update && apt-get install -y --no-install-recommends libpng-dev libjpeg62-turbo-dev libfreetype6-dev \
+    && docker-php-ext-configure gd --with-jpeg --with-freetype \
+    && docker-php-ext-install pdo_mysql calendar bcmath gd \
+    && rm -rf /var/lib/apt/lists/* \
     && a2enmod rewrite headers remoteip \
     && mv "$PHP_INI_DIR/php.ini-production" "$PHP_INI_DIR/php.ini"
 
