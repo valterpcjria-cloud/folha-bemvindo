@@ -1,9 +1,45 @@
 # PRD — Product Requirements Document
-## Sistema FOLHA FRIMELO — Plataforma SaaS de Folha de Pagamento RH
+## Sistema FOLHA BEM VINDO — Folha de Pagamento do Supermercado Bem Vindo (fork da Folha Frimelo)
 
-> **Versão:** 2.0 | **Data:** 2026-10-01 | **Status:** Produto em Produção (v4.58.1)
-> **Proprietário do Produto:** Valter (Frigorífico Frimelo Ltda)
+> **Versão:** 3.0 | **Data:** 2026-11-18 | **Status:** Em implantação — v1.1.0 no ar na VPS (aguardando DNS e respostas da contabilidade)
+> **Proprietário do Produto:** Valter (operador/implantador) · **Cliente:** Supermercado Bem Vindo (Luziânia-GO)
 > **Responsável Técnico:** Claude Code / Antigravity
+> **Como ler:** a §0 é o produto Bem Vindo. As §1–§13 descrevem a base herdada da Frimelo, que o Bem Vindo aproveita ("não fugir da base do sistema existente; acrescentar o que eles pediram").
+
+---
+
+## 0. PRODUTO BEM VINDO
+
+### 0.1 Fonte dos requisitos
+- Documento "REQUISITOS-FOLHA-BEM-VINDO" (versão inicial, out/2026), lista de rubricas (`RUBRICAS-BEM-VINDO.xlsx`, 19 rubricas com códigos) e modelo da planilha de fechamento (8 blocos de setor). Arquivos do cliente ficam fora do repositório.
+- **Premissa:** a contabilidade valida rubricas, incidências e cálculos e faz o fechamento oficial. Valores do sistema são prévia interna; o sistema deve importar o retorno oficial e apontar divergências.
+- 30 perguntas enviadas ao escritório (P1–P30, 17/11/2026); respostas em preparação. Protótipo da Matriz do DP entregue para aprovação do DP/diretoria (usado como referência visual).
+
+### 0.2 Saídas pedidas (a partir de uma base única de lançamentos)
+1. **Matriz do DP** por setor e hierarquia, com subtotal por setor e custo por pessoa.
+2. **Resumo mensal** por setor e geral (bruto, descontos, líquido, extras, adiantamentos, saldo, 13º/férias/rescisão, total por rubrica).
+3. **Prestação de contas ao diretor** (saldo decomposto, por setor, quanto vai para banco/Pix/loja).
+4. **Relação de pagamentos** alfabética por modalidade, planejado × autorizado × pago.
+5. **Relatório para a contabilidade** alfabético (HE em horas, faltas/DSR e atestados em dias, R$ para gratificações/auxílios/descontos), em Excel/CSV/PDF.
+
+### 0.3 Fases e andamento
+| Fase | Escopo | Situação |
+|------|--------|----------|
+| A.1 | Setores, cargos com hierarquia, cadastro ampliado (nascimento, sexo, escolaridade, pagamento) | ✅ v1.0.0 |
+| A.2 | Matriz de lançamentos por setor com subtotais | ✅ v1.0.0 |
+| — | Marca Bem Vindo, Docker na VPS, backup diário | ✅ v1.0.0 / v1.1.0 |
+| A.3 | Etiquetas do protótipo (nível, aniversário, admissão) e atestado em dias; padrão de insalubridade 0% | ✅ v1.1.0 |
+| A.4 | Rubricas do Bem Vindo (HE 60%, adicional noturno, quebra de caixa, produtividade, VT, suspensão...) + relatório para contabilidade | ⏳ aguardando contabilidade |
+| B | Adiantamentos (vale dia 21, convênios), saldo, pagamentos banco/Pix/loja, prestação ao diretor, status em 6 etapas, perfis DP/contabilidade/diretor | ⏳ depende da P24 |
+| C | Retorno oficial da contabilidade e conciliação; 13º/férias/rescisão | ⏳ depende de P26/P29 |
+| D | Indicadores (quadro H/M, absenteísmo, custo por setor, custo ÷ receita) | 🔜 |
+
+### 0.4 Decisões já tomadas
+- Mesmo escritório de contabilidade da Frimelo → reaproveitar códigos e layout de exportação onde o escritório confirmar.
+- MariaDB em Docker na VPS da Luzitec (não Hostgator); o CRM da mesma VPS não pode ser afetado.
+- Numeração própria a partir de 1.0.0. Funcionário novo começa com insalubridade/assiduidade 0% (v1.1.0).
+- Dados bancários, filhos e informações médicas são restritos (LGPD): pagamento visível só para ADMIN/RH.
+- Regras de cálculo novas só com resposta da contabilidade — nada por suposição.
 
 ---
 

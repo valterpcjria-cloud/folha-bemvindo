@@ -6,16 +6,24 @@ Just answer. Short. Technical. Accurate.
 <!-- caveman-end -->
 
 # 🚀 Diretrizes e SKILLS Locais do Antigravity/Claude Code
-# Projeto: FRIMELO - Sistema de Folha de Pagamento RH
+# Projeto: FOLHA BEM VINDO — Folha de Pagamento do Supermercado Bem Vindo
 
-Este arquivo define as **regras globais de arquitetura, comandos e as melhores "skills" ativas** para o agente interagir com este repositório. 
+Este arquivo define as **regras globais de arquitetura, comandos e as melhores "skills" ativas** para o agente interagir com este repositório.
 Sempre que você (AI) for analisar, criar features ou debugar código neste projeto, **siga estritamente as seções abaixo.**
+
+## ⚠️ 0. O QUE É ESTE PROJETO (ler primeiro)
+- **Fork da Folha Frimelo (base v4.58.1)**, criado em 2026-11-17 para o **Supermercado Bem Vindo** (Luziânia-GO, ~70 colaboradores, 8 setores). Versão própria recomeça em **1.0.0** (atual: **v1.1.0**, 2026-11-18).
+- **NUNCA alterar `/home/valterpcjria/FOLHA FRIMELO`** (outro sistema, em produção na Hostgator). Lá é só leitura. Correção que valha para os dois: avisar o Valter, não aplicar na Frimelo.
+- **Produção:** VPS Hostinger da Luzitec (`ssh luzitec-vps`), em Docker, em `/opt/bemvindo` (app em `127.0.0.1:8090` + MariaDB 11.4 próprio). Endereço `https://bemvindo.luzitec.cnt.br` (Caddy já configurado; aguardando DNS). Até o DNS: túnel `ssh -N -L 8090:127.0.0.1:8090 luzitec-vps` → http://localhost:8090.
+- **A mesma VPS roda o CRM da Luzitec em produção.** Nada pode afetá-lo: Caddy compartilhado (`/opt/luzitec/proxy/Caddyfile`), cron/timers e backup do CRM não são tocados. Conferir `https://crm.luzitec.cnt.br/` → 307 depois de qualquer mexida.
+- **Contabilidade é a oficial**: cálculos do sistema são prévia. Regras de rubricas novas (HE 60%, adicional noturno, suspensão, 13º/férias, GPS...) dependem das respostas às 30 perguntas enviadas ao escritório (P1–P30). **Não inventar regra** — esperar a resposta.
+- Repositório: `valterpcjria-cloud/folha-bemvindo` (privado). Histórico antigo da Frimelo só na branch local `frimelo-historico` e em 42 tags v4.x locais (contêm senhas): **NUNCA `git push --tags`, `--all` nem push dessa branch**. Tag sempre explícita: `git push origin vX.Y.Z`.
 
 ---
 
 ## 🛠 1. SKILLS ATIVAS OBRIGATÓRIAS (Contexto do Projeto)
 
-> **Skill do projeto:** `.claude/skills/frimelo-folha/` — conhecimento consolidado do sistema (cálculo da folha, arquitetura, segurança, banco/migrations, release/deploy, lições aprendidas) + scripts `validar_zip.py` e `verificar_producao.sh`. Carregue-a em qualquer tarefa neste repositório e mantenha-a atualizada junto com SPEC/CHANGELOG.
+> **Skill do projeto:** `.claude/skills/frimelo-folha/` (nome herdado; conteúdo atualizado para o Bem Vindo) — cálculo da folha, arquitetura, segurança, banco/migrations, deploy Docker na VPS, lições aprendidas. Carregue-a em qualquer tarefa neste repositório e mantenha-a atualizada junto com SPEC/CHANGELOG. Comandos completos: `docker/vps/LEIA-ME.md` (backup) e a seção 2 abaixo.
 
 Sempre atue invocando os conhecimentos das seguintes *skills* de engenharia:
 
@@ -31,8 +39,8 @@ Sempre atue invocando os conhecimentos das seguintes *skills* de engenharia:
   - Roteamento: Use o micro-router customizado do projeto (em `lib/Router.php`). Nunca use rotas acopladas nos componentes React.
   - Segurança: Use `requireRole()` do `auth.php` para RBAC.
 - **`database-optimizer` & `sql-pro`**:
-  - Regra: Banco de Dados hospedado (MySQL/MariaDB via Hostgator).
-  - Migrações: Devem ser geradas usando scripts `.sql` em `backend/migrations/` (com `IF NOT EXISTS` ou `IGNORE`) e devem adotar `Single-Statement` para Triggers em vez de `DELIMITER` (para compatibilidade c/ PDO/phpMyAdmin).
+  - Regra: MariaDB 11.4 em container Docker (VPS). PDO com `EMULATE_PREPARES=false` → **nunca repetir o mesmo parâmetro nomeado** (`:uf` duas vezes = HY093).
+  - Migrações do Bem Vindo: `docker/banco/NN_bv_descricao.sql` (numeradas; num banco novo rodam sozinhas no initdb). Idempotentes e aditivas (`ADD COLUMN IF NOT EXISTS` funciona no MariaDB). Sem `DELIMITER`. `backend/migrations/` é histórico da Frimelo.
 - **`code-reviewer` & `clean-code`**:
   - Regra: Código legível, nomes de variáveis em Português ou Inglês (mas mantenha padrão de domínio como "Lancamento", "Funcionario", "Comissao").
   - Type-Safety: O Frontend *DEVE* mapear as interfaces vindas do backend em `types.ts`.
@@ -41,23 +49,23 @@ Sempre atue invocando os conhecimentos das seguintes *skills* de engenharia:
 
 ## 🏗 2. COMANDOS DO PROJETO (Workflow)
 
-Quando precisar buildar, debugar ou testar, utilize os seguintes comandos locais:
+- **Verificar:** `npx tsc --noEmit -p .` (único erro aceito: `FormulasView.tsx` 148, pré-existente) e `npx vite build`.
+- **PHP:** não há PHP local → `docker run --rm --entrypoint php folha-bemvindo:X.Y.Z -l /var/www/html/backend/v1/<arquivo>.php`.
+- **Teste local (dados FICTÍCIOS):** `docker compose -p bemvindo-teste --env-file <env> -f docker-compose.yml -f <override initdb> up -d` numa porta livre (8090 costuma estar ocupada pelo túnel → usar 8091). Derrubar com `down -v` no fim. Playwright-core + `/usr/bin/google-chrome` para telas.
+- **Versão:** `npm --no-git-tag-version version X.Y.Z` (perguntar o número antes).
+- **Commits:** Conventional Commits em PT (`feat|fix|docs|chore(escopo): descricao`), código e docs em commits separados, rodapé de co-autoria.
+- `create_zip.py` (zip Hostgator) **não é usado** no Bem Vindo.
 
-- **Rodar Frontend (Dev):** `npm run dev` (disponível na porta 3000)
-- **Construção de Produção Local:** `npx vite build`
-- **Gerar Pacote de Deploy (Hostgator):** `python3 create_zip.py --version X.Y.Z`
-- **Atualizar Versão (Package.json):** `npm --no-git-tag-version version X.Y.Z`
-- **Commits:** Conventional Commits (`feat|fix|docs|refactor(vX.Y.Z): descricao`), código e docs em commits separados.
-
-### 2.1 Fluxo de release (OBRIGATÓRIO — validado em 2026-10-01)
-1. **Perguntar a versão** ao usuário antes de bumpar (nunca decidir sozinho).
-2. Implementar → `npx vite build` → `npm --no-git-tag-version version X.Y.Z` → `python3 create_zip.py --version X.Y.Z`.
-3. **Sempre entregar o zip** ao fim da implementação (caminho + se há SQL). Validar: `testzip`, sem duplicados, sem `.env`, arquivos-chave presentes.
-4. Migration (se houver) roda no phpMyAdmin **ANTES** do zip. Migrations idempotentes e aditivas (rollback = zip anterior).
-5. Usuário sobe o zip e testa **em produção** (não há staging). Verificação externa possível via `curl` em rotas inofensivas (`/status`, script só-leitura → 403).
-6. Só após teste OK: CHANGELOG + SPEC + PRD + CLAUDE.md → commits → `git tag vX.Y.Z`.
-7. **Push e release são rodados pelo usuário** no terminal do VSCode (a conta gh ativa é outra; o remote local usa `valterpcjria-cloud` e o token fine-grained é colado na caixa do topo do VSCode). Release: `read -s -p "Token: " GH_TOKEN; export GH_TOKEN; /home/valterpcjria/.local/bin/gh release create vX.Y.Z deploy-frimelo-X.Y.Z.zip --repo valterpcjria-cloud/folha-frimelo --title "..." --notes-file notas.md; unset GH_TOKEN`.
-8. **Nunca** gravar token em arquivo, memória ou chat.
+### 2.1 Fluxo de versão (Bem Vindo — validado em v1.0.0 e v1.1.0)
+1. **Perguntar a versão** ao Valter antes de bumpar.
+2. Implementar → testar no Docker local com dados fictícios → commit do código.
+3. `docker build -q -f docker/Dockerfile -t folha-bemvindo:X.Y.Z .` → conferir na imagem: sem `.env`, versão no bundle, 4 extensões (`calendar gd bcmath pdo_mysql`), `php -l` dos PHP alterados.
+4. Na VPS: **backup na hora** (`systemctl start bemvindo-backup.service`) → `docker save folha-bemvindo:X.Y.Z | gzip -1 | ssh luzitec-vps 'gunzip | docker load'` → migrations novas (`scp` para `/opt/bemvindo/docker/banco/` + `docker compose exec -T db mariadb ...`) **antes** de trocar a imagem → `sed -i "s/^IMAGEM_TAG=.*/IMAGEM_TAG=X.Y.Z/" .env && docker compose up -d --no-build`.
+5. Conferir: `/backend/v1/status` (online + connected), versão no bundle, `.php` solto → 403, logs sem `EXCEPTION`, **CRM → 307**.
+6. Valter testa na tela → CHANGELOG (+SPEC/PRD/CLAUDE/skill se mudou regra) → commit docs → `git tag vX.Y.Z`.
+7. **Push é do Valter** (meu `git push` é bloqueado): `git push origin main` e `git push origin vX.Y.Z`. Conferir com `git ls-remote origin HEAD 'refs/tags/*'` (só tags v1.x no remoto).
+8. **Rollback:** `IMAGEM_TAG` da versão anterior + `up -d --no-build`. Cron do CRM (`/etc/cron.d/docker-image-prune`, 05:25) apaga imagens sem uso há 24h → a anterior pode ter sumido da VPS; reenviar do PC (`docker images folha-bemvindo`). Migrations são aditivas.
+9. **Nunca** gravar token/senha em arquivo, memória ou chat. Senha temporária do SUPERADMIN aparece só no terminal do Valter.
 
 ---
 
@@ -71,12 +79,14 @@ Quando precisar buildar, debugar ou testar, utilize os seguintes comandos locais
    - Nunca altere a string `VERSION` manualmente no `config.ts`. O Vite já foi configurado para injetar `__APP_VERSION__` retirado dinamicamente do `package.json`.
 4. **Resolução de Problemas no Backend:**
    - Logs de erro vão ser lançados no endpoint ou no servidor. Sempre valide as queries PDO com `try..catch` retornando um JSON `{ error: "msg" }` com `http_response_code()`.
-5. **Só existe produção (dados reais):**
-   - Nunca sugerir testes que alterem funcionários/lançamentos reais (atestado "de teste", desligar funcionário, faltas fictícias). Validar com casos reais ou conferência de valores.
-   - Não há PHP local (`php -l` indisponível) — revisar PHP com atenção redobrada; sugerir `php8.3-cli`.
+5. **Produção tem dados reais:**
+   - Na VPS, nunca criar/alterar funcionários/lançamentos "de teste". Testes com dados fictícios são feitos no **Docker local** (seção 2), que reproduz a produção.
+   - Não há PHP local — `php -l` via a imagem Docker (seção 2).
 6. **Regra de negócio multi-empresa:** todo ADMIN vê todas as empresas (intencional). Usuário de empresa cliente = perfil RH.
 
 ---
+
+> As seções 4 e 5 vêm da Frimelo e continuam valendo para o código do Bem Vindo (mesma base). Diferenças do Bem Vindo: seção 5B.
 
 ## 📌 4. RÚBRICAS DO CADASTRO — v4.53.10+
 
@@ -189,10 +199,34 @@ Se precisar adicionar nova rubrica do tipo "valor fixo" (como Gratificação):
 
 ---
 
-## 📋 6. PENDÊNCIAS (fonte única: SPEC.md §20)
-- Remover transição v4.58.0 (header `Authorization` legado + token no corpo do login) após todos relogarem.
-- Apagar scripts `.php` soltos de `backend/v1/` (já bloqueados; `setup_db.php`/`fix_password.php` são usados por rotas — revisar).
-- CSP enforced; conferir v4.54.0 em casos reais; erro TS pré-existente em `FormulasView.tsx`.
+## 📌 5B. REGRAS DO BEM VINDO (v1.0.0 → v1.1.0)
+
+### Setores e hierarquia (v1.0.0)
+- Tabela `setores` (8: Administrativo, Açougue, Padaria, FLV, PGC, Frente de Loja, Vendas Online/Escolas, Entregas); `cargos` com `id_setor` + `ordem_hierarquia` (1 = topo), único por (empresa, setor, nome). Setor/cargo **desativa**, não exclui. Tela `/setores` (`SetoresView` + `components/setores/`).
+- `funcionarios`: `id_setor`, `id_cargo`, `data_nascimento`, `sexo`, `escolaridade`, `modalidade_pagamento` (BANCO/PIX/LOJA), dados bancários/Pix (**só ADMIN/RH/SUPERADMIN veem e gravam**). `departamento` continua sendo o código da exportação contábil — **não é setor**.
+- Matriz `/lancamentos` "Por setor" (padrão, localStorage `bv_matriz_visao`) ou "Lista": blocos na ordem dos setores, pessoas por cargo, subtotal por rubrica + total geral (`views/payroll/agruparPorSetor.ts`, `PayrollGroupedBody.tsx`).
+
+### Marca e segurança (v1.0.0)
+- Marca Folha Bem Vindo; contracheque lê empresa via `GET empresa_atual`; PDFs usam `nome_cidade`. Cookie `bemvindo_session`. CORS só `bemvindo.luzitec.cnt.br` + `APP_ORIGIN`.
+- Empresa nova → senha temporária (nunca `frimelo123`); SUPERADMIN por CLI (`docker/scripts/criar_superadmin.php`).
+
+### Etiquetas, atestado em dias, padrões (v1.1.0)
+- `views/payroll/FuncionarioCell.tsx`: etiquetas só informativas — nível (escolaridade), aniversariante no mês da competência, admissão no mês com "N/30 dias" (o proporcional já era calculado na rubrica 33).
+- Atestado ganhou `competencia_atestados.dias` (1..31, NULL = não informado). Assiduidade continua dependendo só de existir atestado. `GET /atestados` → `{data:[ids], dias:{id:n}}`; `POST` com `dias` opcional (ausente = mantém); valida empresa; competência FECHADA → 409.
+- Funcionário novo: **insalubridade e assiduidade 0%** (Frimelo: 20%/11%) — formulário, POST/PUT, fallback do cálculo e DEFAULT da coluna.
+
+### Infra (v1.0.0 → v1.1.0)
+- Imagem `php:8.3-apache` com `calendar`, `gd`, `bcmath`, `pdo_mysql` (sem `calendar` o DSR dá 500).
+- Backup diário 02:30 (`bemvindo-backup.timer`): 14 dias em `/opt/bemvindo/backup/copias` + 30 dias no Drive (`luzitec-backup-cripto:bemvindo/`). Ver `docker/vps/LEIA-ME.md`. O client_id compartilhado do rclone será desativado em 2026 → envio ao Drive (Bem Vindo e CRM) vai falhar até criar client_id próprio.
 
 ---
-*Este CLAUDE.md foi gerado nativamente pelo Antigravity em colaboração com o Usuário para blindagem tecnológica e scale infinito. Última atualização: v4.58.1*
+
+## 📋 6. PENDÊNCIAS (fonte única: SPEC.md §20)
+- **Aguardando contabilidade (P1–P30):** rubricas do Bem Vindo (HE 60% cód. 37, adicional noturno 100, quebra de caixa 834, produtividade 566, VT 816 etc.), suspensão, 13º/férias/rescisão, GPS/custo, retorno oficial e conciliação.
+- Fase B (controles internos): adiantamentos (vale dia 21, convênios), saldo a pagar, pagamento banco/Pix/loja e conferência; status de competência em 6 etapas; perfis DP/contabilidade/diretor.
+- Relatório para a contabilidade (HE em horas, faltas/atestados em dias) e os demais relatórios do documento de requisitos.
+- DNS `bemvindo.luzitec.cnt.br` (terceiro cria) → conferir HTTPS. CEP da empresa. Feriados municipais de Luziânia.
+- Herdadas da Frimelo: remover transição v4.58.0 (`Authorization` legado), scripts `.php` soltos, CSP enforced, erro TS em `FormulasView.tsx`.
+
+---
+*Este CLAUDE.md foi gerado nativamente pelo Antigravity em colaboração com o Usuário e adaptado para a Folha Bem Vindo. Última atualização: v1.1.0 (2026-11-18)*

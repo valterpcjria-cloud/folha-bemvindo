@@ -21,9 +21,19 @@ Tabela histórica completa: `SPEC.md` §16. Ao descobrir uma nova, registre aqui
 | `git fetch` "repository not found" | Conta gh ativa sem acesso | Fluxo de push do `release-deploy.md` |
 | Valor antigo persiste ao zerar quantidade | `if (qty<=0) return` sem zerar total | Sempre zerar `valor_total` quando `qty<=0` |
 | IRRF positivo para RTM ≤ 5.000 | Redutor aplicado sobre BC | Redutor usa RTM; checar isenção antes |
+| **BV** DSR dias úteis 500 no Docker | Imagem PHP sem `calendar` (`cal_days_in_month`, `easter_date`) | Dockerfile com `calendar gd bcmath pdo_mysql`; `php -m` a cada imagem |
+| **BV** Tela sempre no cálculo reserva de feriados | `:uf` repetido na query → HY093 (prepares nativos) | Nomes distintos (`:uf2`). A Frimelo tem o mesmo bug — avisado, não mexido |
+| **BV** PDF "- -GO" | Coluna é `nome_cidade`, código lia `cidade` | Fallback `cidade ?? nome_cidade` |
+| **BV** Funcionário novo com insalubridade 324,20 sem ter direito | Padrão herdado 20% / assiduidade 11% | v1.1.0: padrão 0% em 4 lugares (form, API, cálculo, DEFAULT) |
+| **BV** Imagem anterior sumiu da VPS | Cron do CRM `docker image prune -af --filter until=24h` | Reenviar do PC; não mexer no cron do CRM |
+| **BV** "Conexão recusada" em localhost:8090 | Túnel SSH fechado | `ssh -N -L 8090:127.0.0.1:8090 luzitec-vps` |
+| **BV** Consulta via `ssh '... -e "..."'` quebra | Aspas aninhadas | Mandar o SQL pelo stdin |
+| **BV** PC sem espaço (0 MB), saídas sumindo | Imagens Docker de rebuilds acumuladas | `docker builder prune -f` + `docker image prune -f` com autorização |
 
 ## Hábitos que evitaram problemas
 - Reproduzir conta nova em Python/planilha com exemplo real e mostrar ao Valter.
 - Antes de afirmar risco de segurança em produção, confirmar no código; para testar de fora, só endpoints inofensivos.
 - Separar versões (stash) para cada zip conter só o que foi testado.
 - Quando o Valter some no meio do trabalho: salvar ponto de parada na memória, não subir nada, deixar resumo do que ele precisa fazer.
+- **BV:** antes de implementar coluna/regra do protótipo, conferir se ela depende de pergunta enviada à contabilidade (P1–P30); se depender, esperar.
+- **BV:** testar a restauração do backup, não só a criação.

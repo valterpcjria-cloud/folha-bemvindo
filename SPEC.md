@@ -1,8 +1,65 @@
-# SPEC.md — Sistema FOLHA FRIMELO
+# SPEC.md — Sistema FOLHA BEM VINDO (fork da Folha Frimelo)
 ## Spec-Driven Development — Documento de Especificação Completa
 
-> **Versão do Documento:** v4.58.1 | **Data:** 2026-10-01
+> **Versão do Documento:** v1.1.0 | **Data:** 2026-11-18
 > **Propósito:** Registro permanente do estado arquitetural, regras de negócio, fluxos, banco de dados e decisões técnicas do sistema. Nenhuma IA ou desenvolvedor deve modificar este sistema sem antes ler e compreender este SPEC.
+> **Como ler:** a §0 descreve o que é próprio do Bem Vindo. As §1–§20 descrevem a base herdada da Frimelo (v4.58.1), que continua valendo para o código salvo onde a §0 diz o contrário (infraestrutura, deploy, nomes de domínio e empresas da Frimelo são só histórico).
+
+---
+
+## 0. FOLHA BEM VINDO — O QUE É PRÓPRIO DESTE SISTEMA
+
+### 0.1 Identidade
+**Nome:** Folha Bem Vindo · **Cliente:** Supermercado Bem Vindo (CNPJ 41.403.240/0001-14, Luziânia-GO, ~70 colaboradores)
+**Origem:** fork da Folha Frimelo v4.58.1 em 2026-11-17 (histórico do git recomeçado; numeração recomeça em 1.0.0)
+**Versão atual:** 1.1.0 · **Repositório:** `valterpcjria-cloud/folha-bemvindo` (privado)
+**Premissa:** a contabilidade (mesmo escritório da Frimelo) é a fonte oficial dos cálculos; o sistema faz a prévia e organiza os lançamentos por setor.
+
+### 0.2 Infraestrutura (substitui §2.3 e §13)
+| Item | Bem Vindo |
+|------|-----------|
+| Servidor | VPS Hostinger da Luzitec (`ssh luzitec-vps`), compartilhada com o CRM da Luzitec em produção |
+| Execução | Docker Compose em `/opt/bemvindo` (projeto `bemvindo`): `bemvindo-app` (php:8.3-apache, `127.0.0.1:8090`, 512 MB) + `bemvindo-db` (MariaDB 11.4, sem porta, 512 MB) |
+| Imagem | `folha-bemvindo:${IMAGEM_TAG}`; build local (`docker/Dockerfile`, Node 22 → php:8.3-apache com `calendar gd bcmath pdo_mysql`) levado por `docker save \| ssh docker load` (a VPS não tem o código) |
+| Segredos | `/opt/bemvindo/.env` (600), gerados na VPS; nunca no git/imagem |
+| HTTPS | Caddy compartilhado (`luzitec-proxy`, `/opt/luzitec/proxy/Caddyfile`): bloco `bemvindo.luzitec.cnt.br` → `127.0.0.1:8090`, antes do catch-all |
+| Acesso sem DNS | `ssh -N -L 8090:127.0.0.1:8090 luzitec-vps` → http://localhost:8090 |
+| Banco inicial | `docker/banco/01_estrutura_e_config.sql` (estrutura da Frimelo sem dados pessoais), `02_empresa_principal.sql` (empresa + parâmetros 2026), `10_…`, `11_…`, `12_…` (migrations do Bem Vindo) |
+| Backup | `bemvindo-backup.timer` 02:30 → `/opt/bemvindo/backup/fazer-backup.sh`: dump conferido + config; 14 dias na VPS, 30 dias no Google Drive criptografado (`luzitec-backup-cripto:bemvindo/`). Restauração testada. Fonte e instruções: `docker/vps/` |
+| Deploy | `CLAUDE.md` §2.1 (backup → imagem → migrations → `IMAGEM_TAG` → `up -d --no-build` → conferir app e CRM). `create_zip.py` não é usado |
+| Rollback | `IMAGEM_TAG` anterior. Atenção: cron do CRM apaga imagens sem uso há 24h na VPS → reenviar a anterior do PC |
+
+### 0.3 Banco de dados — acréscimos do Bem Vindo
+| Migration | Conteúdo |
+|-----------|----------|
+| `10_bv_setores_cargos_cadastro.sql` (v1.0.0) | Tabela `setores` (id_empresa, nome, ordem, ativo; 8 setores); `cargos` + `id_empresa`, `id_setor`, `ordem_hierarquia` (unique empresa+setor+nome); `funcionarios` + `id_setor`, `id_cargo`, `data_nascimento`, `sexo` (F/M/O), `escolaridade`, `modalidade_pagamento` (BANCO/PIX/LOJA), `banco`, `agencia`, `conta`, `tipo_conta`, `chave_pix` |
+| `11_bv_atestado_dias.sql` (v1.1.0) | `competencia_atestados.dias` TINYINT NULL |
+| `12_bv_padrao_insalubridade_zero.sql` (v1.1.0) | DEFAULT de `funcionarios.insalubridade_perc` e `assiduidade_perc` = 0.00 |
+
+Todas idempotentes e aditivas. PDO com `EMULATE_PREPARES=false`: parâmetro nomeado não pode se repetir na mesma query (HY093).
+
+### 0.4 API — acréscimos e mudanças
+| Rota | Método | Perfil | Descrição |
+|------|--------|--------|-----------|
+| `setores` | GET / POST / PUT `{id}` / POST `reordenar` | leitura: todos; escrita: ADMIN/RH | Setores da empresa (sem DELETE: desativar) |
+| `cargos` | GET / POST / PUT / DELETE | escrita: ADMIN/RH | Reescrita: filtra por empresa, hierarquia por setor; renomear atualiza `funcionarios.cargo` |
+| `funcionarios` | GET / POST / PUT | — | + campos do Bem Vindo (gravados só se presentes); pagamento só ADMIN/RH/SUPERADMIN; padrão de insalubridade/assiduidade 0 |
+| `empresa_atual` | GET | autenticado | Razão social, CNPJ, cidade/UF da empresa do usuário (cabeçalho do contracheque) |
+| `atestados` | GET | ADMIN/RH | `{data:[funcionario_id], dias:{funcionario_id: dias\|null}}` |
+| `atestados` | POST | ADMIN/RH | `{funcionario_id, competencia_id, tem_atestado, dias?}`; `dias` 1..31 (ausente = mantém; vazio/0 = NULL); 404 se não for da empresa; 409 se competência FECHADA |
+| `companies` | POST | SUPERADMIN | Empresa nova cria admin com **senha temporária** devolvida em `senha_temporaria` (antes `frimelo123`); parâmetros 2026 (TETO_INSS 8475.55, FAIXA_ISENCAO_IRRF 2428.80) |
+
+### 0.5 Telas e regras do Bem Vindo
+- **Setores e Cargos** (`/setores`): ordem dos setores = ordem dos blocos na matriz; hierarquia de cargos por setor (1 = topo).
+- **Cadastro do funcionário**: setor, cargo da hierarquia (select), vínculo, nascimento, sexo, escolaridade, pagamento. `departamento` segue sendo o código da exportação contábil (não é setor).
+- **Matriz de lançamentos**: visão "Por setor" (padrão) ou "Lista"; blocos por setor, pessoas por `cargo_ordem`, subtotal por rubrica, total geral, recolher/filtrar setor.
+- **Etiquetas na linha** (v1.1.0, só informação): nível (escolaridade), aniversariante no mês da competência, admissão no mês com dias do proporcional (cálculo já existente da §7, v4.52.10).
+- **Atestado em dias** (v1.1.0): informativo para a contabilidade; a perda de Assiduidade continua dependendo só da existência do atestado.
+- **Padrões**: funcionário novo com insalubridade 0% e assiduidade 0% (Frimelo 20%/11%).
+- **Marca**: "Folha Bem Vindo"; cookie `bemvindo_session`; contracheque com dados da empresa via `empresa_atual`; PDFs leem `nome_cidade`.
+
+### 0.6 Regras ainda NÃO definidas (aguardando a contabilidade, perguntas P1–P30)
+HE 60% (cód. 37) e base/divisor (P1, P15), adicional noturno (P16), incidências INSS/FGTS/IRRF (P1–P8), códigos (P9–P11), insalubridade por função (P17), faltas/DSR/suspensão/atestados longos (P18), salário-família (P19), GPS patronal e provisões (P21–P23), o que é contracheque × controle interno (P24), layout do arquivo e retorno oficial (P25–P26), data de corte (P27), consignados múltiplos (P28), 13º/férias/rescisão (P29). **Não implementar essas regras por suposição.**
 
 ---
 
@@ -931,6 +988,12 @@ O `.htaccess` em `public/` é copiado para `dist/` pelo Vite durante o build.
 | Botão "Imprimir / PDF" sem ação | Componente aberto sem passar o callback `onPrint` | Conferir props opcionais de callback ao reutilizar componente (v4.58.1) |
 | Zip com arquivos duplicados | `create_zip.py` adicionava ferramentas PHP 2x | Corrigido v4.57.1; validar zip (`testzip`, duplicados, `.env` ausente) antes de entregar |
 | Login burlando limite de tentativas | IP lido de `X-Forwarded-For` (forjável) | v4.55.0: `CF-Connecting-IP` só de faixas Cloudflare; senão `REMOTE_ADDR` |
+| **BV** DSR dias úteis 500 no Docker | Imagem oficial do PHP sem a extensão `calendar` (também faltavam `gd`/`bcmath` para PDFs) | Dockerfile instala `calendar gd bcmath pdo_mysql`; conferir `php -m` a cada imagem (v1.0.0) |
+| **BV** Tela caía no cálculo reserva de feriados | `:uf` repetido na mesma query → HY093 com `EMULATE_PREPARES=false` | Nomes distintos (`:uf2`); varrer parâmetros repetidos ao mexer em SQL (v1.0.0). A Frimelo tem o mesmo bug (avisado, não mexido) |
+| **BV** PDF com "- -GO" | Código lia `cidade`, coluna é `nome_cidade` | `$e['cidade'] ?? $e['nome_cidade']` (v1.0.0) |
+| **BV** Funcionário novo com insalubridade indevida | Padrão herdado da Frimelo (20% / 11%) | Padrão 0% em formulário, API, cálculo e DEFAULT (v1.1.0) |
+| **BV** Versão anterior sumiu da VPS para rollback | Cron do CRM `docker image prune -af --filter until=24h` | Guardar a imagem anterior no PC e reenviar; não mexer no cron do CRM |
+| **BV** localhost:8090 "conexão recusada" | Túnel SSH não estava aberto | `ssh -N -L 8090:127.0.0.1:8090 luzitec-vps` e deixar o terminal aberto |
 
 ---
 
@@ -981,6 +1044,8 @@ O sistema é multi-tenant com isolamento por `id_empresa`:
 
 | Versão | Data | Principais Mudanças |
 |--------|------|---------------------|
+| **BV 1.1.0** | 2026-11-18 | Etiquetas nível/aniversário/admissão na matriz; atestado em dias; insalubridade/assiduidade padrão 0%; `POST /atestados` valida empresa e recusa competência fechada; backup diário do banco na VPS |
+| **BV 1.0.0** | 2026-11-18 | Fork Bem Vindo: Docker na VPS, setores/cargos/hierarquia, cadastro ampliado, matriz por setor, marca, senha temporária em empresa nova; fixes: extensões PHP da imagem, HY093 no DsrService, `nome_cidade` no PDF |
 | v4.50.3 | 2026-04-03 | ADMIN passa a acessar múltiplas empresas via `X-Company-Context` (antes era só SUPERADMIN) |
 | v4.50.4 | 2026-04-16 | Nova rubrica 1000 (Adic. Tempo de Serviço, PERCENTUAL, SalMin/100). Insalubridade: base = max(0, SalMin − Faltas). Cascata Faltas→Insalubridade→HE→DSR no frontend e backend |
 | v4.50.5 | 2026-04-16 | Reordenação da rubrica 1000 para posição 8 (após 833) via migration atômica |
@@ -1021,17 +1086,23 @@ O sistema é multi-tenant com isolamento por `id_empresa`:
 
 ---
 
-## 20. PENDÊNCIAS E BACKLOG (atualizado 2026-10-01)
+## 20. PENDÊNCIAS E BACKLOG (atualizado 2026-11-18 — Folha Bem Vindo v1.1.0)
 
 | Item | Tipo | Observação |
 |------|------|-----------|
-| Remover transição da v4.58.0 (header `Authorization` legado + token no corpo do login) | Segurança | Fazer após todos relogarem (alguns dias após 2026-10-01) |
-| Apagar scripts `.php` soltos de `backend/v1/` do repositório e do servidor | Segurança/limpeza | Já bloqueados (403) desde v4.57.1; `setup_db.php` e `fix_password.php` são usados por rotas — revisar antes |
-| CSP de Report-Only para enforced | Segurança | Precisa monitorar violações antes |
-| Conferir v4.54.0 em caso real: atestado sem faltas zera Assiduidade; Desligado some em comp aberta | Validação | Só observar casos reais — não alterar dados de produção |
-| Erro TS pré-existente em `FormulasView.tsx` (`formula` não existe em `EventoFolha`) | Tipagem | Não quebra o build |
-| Instalar `php8.3-cli` local para `php -l` | Ferramenta | Hoje PHP não é validado antes do deploy |
+| Rubricas e regras do Bem Vindo (§0.6) | Cálculo | Aguardando respostas da contabilidade (P1–P30), que estão sendo providenciadas |
+| Fase B: adiantamentos (vale dia 21, convênios compras/farmácia), saldo a pagar, pagamento banco/Pix/loja + conferência | Funcionalidade | Depende da P24 (contracheque × controle interno) |
+| Status da competência em 6 etapas + perfis DP/contabilidade/diretor | Funcionalidade | Do documento de requisitos |
+| Relatórios: resumo por setor, prestação ao diretor, pagamentos, relatório para contabilidade (HE em horas, faltas/atestados em dias) | Funcionalidade | Fases A–C |
+| Retorno oficial da contabilidade e divergências | Funcionalidade | Depende da P26 |
+| DNS `bemvindo.luzitec.cnt.br` | Infra | Terceiro cria; depois conferir HTTPS automático do Caddy |
+| client_id próprio do Google Drive no rclone | Infra | O compartilhado será desativado em 2026 (afeta backup do Bem Vindo e do CRM) |
+| CEP da empresa; feriados municipais de Luziânia | Cadastro | Pendentes |
+| Remover transição v4.58.0 (`Authorization` legado + token no corpo do login) | Segurança | Herdado |
+| Apagar scripts `.php` soltos de `backend/v1/` | Segurança/limpeza | Já bloqueados (403); `setup_db.php` e `fix_password.php` são usados por rotas — revisar |
+| CSP de Report-Only para enforced | Segurança | Herdado |
+| Erro TS pré-existente em `FormulasView.tsx` | Tipagem | Não quebra o build |
 
 ---
 
-*Este documento foi atualizado em 2026-10-01. Versão atual: FOLHA FRIMELO v4.58.1.*
+*Este documento foi atualizado em 2026-11-18. Versão atual: FOLHA BEM VINDO v1.1.0 (base Frimelo v4.58.1).*

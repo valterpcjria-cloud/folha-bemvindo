@@ -65,3 +65,9 @@ Edição em tempo real: `updateLancamento()` monta `cascadeUpdates` (Faltas→As
 **Nova rubrica "do cadastro" (valor fixo ou %):** `types.ts` (Funcionario) → `EVENT_CODES` → `routes/funcionarios.php` (SELECT/INSERT/UPDATE) → migration ADD COLUMN → `EmployeesView.tsx` (input + estado inicial em `handleOpenModal`) → `PayrollTableRow.tsx` (`isCadastroLocked`) → `aplicarRubricasCadastroFuncionarios()` (+ recalc se %). Passo a passo completo: `CLAUDE.md` §4.3.
 
 **Exemplo de conferência (HE):** Sal 2.000 + Grat 270 + Insalub 324,20 = 2.594,20 → /220×2 = 23,5836/h → 12h = 283,00.
+
+## Bem Vindo (v1.1.0)
+- Padrão de funcionário novo: `insalubridade_perc` 0 e `assiduidade_perc` 0 (formulário, POST/PUT, `?? 0` no cálculo, DEFAULT da coluna). Frimelo: 20/11.
+- Atestado tem `dias` (informativo para a contabilidade); Assiduidade continua zerando só pela existência do atestado.
+- Etiqueta "Admissão dd/mm · N/30 dias" usa a mesma conta do `calcSalarioProporcional` (30 − dia + 1).
+- **Pendente da contabilidade** (não implementar por suposição): HE 60% (cód. 37) e base/divisor da hora (P1, P15), adicional noturno (100, P16), quebra de caixa 834 / produtividade 566 / gratificação de função 82 (P4), VT 816/687/902 (P10), faltas parciais 23 (P13), insalubridade por função e base (P17), suspensão e atestados longos (P18), salário-família (P19), GPS patronal e provisões (P21–P23), 13º/férias/rescisão (P29). Lista de rubricas do cliente: memória `project_bemvindo_planilha`.

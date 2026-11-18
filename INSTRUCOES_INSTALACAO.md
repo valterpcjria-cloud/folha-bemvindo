@@ -1,3 +1,5 @@
+> **Folha Bem Vindo:** este guia é histórico da Frimelo (Hostgator/cPanel) e **não se aplica** ao Bem Vindo, que roda em Docker na VPS. Ver `README.md`, `CLAUDE.md` §2.1 e `docker/vps/LEIA-ME.md`.
+
 # 📁 GUIA DE INSTALAÇÃO (HostGator - cPanel)
 
 Este erro **404** acontece porque a pasta `backend` não está no lugar certo no servidor. O sistema (Frontend) tenta acessar a API, mas não encontra os arquivos.
