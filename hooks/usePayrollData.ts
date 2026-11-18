@@ -473,7 +473,7 @@ function aplicarRubricasCadastroFuncionarios(
     funcionarios.forEach(f => {
         // Insalubridade (62): percentual sobre Salário Mínimo
         if (insalubEvent) {
-            const perc = Number(f.insalubridade_perc ?? 20);
+            const perc = Number(f.insalubridade_perc ?? 0); // Bem Vindo v1.1.0: sem % no cadastro = sem insalubridade
             const key = `${f.id}_${insalubEvent.id}`;
             const existing = result[key] || {};
             result[key] = {
@@ -486,7 +486,7 @@ function aplicarRubricasCadastroFuncionarios(
 
         // Assiduidade (833): percentual sobre Salário Base
         if (assidEvent) {
-            const perc = Number(f.assiduidade_perc ?? 11);
+            const perc = Number(f.assiduidade_perc ?? 0); // Bem Vindo v1.1.0: sem % no cadastro = sem assiduidade
             const key = `${f.id}_${assidEvent.id}`;
             const existing = result[key] || {};
             result[key] = {

@@ -57,8 +57,9 @@ const EmployeesView: React.FC = () => {
       local: DEFAULT_LOCATION,
       departamento: DEFAULT_DEPARTMENT,
       salario_base: undefined,
-      insalubridade_perc: 20,
-      assiduidade_perc: 11,
+      // Bem Vindo v1.1.0: começa em 0% (na Frimelo era 20%/11%); o DP preenche quem tem direito
+      insalubridade_perc: 0,
+      assiduidade_perc: 0,
       adic_tempo_servico_perc: 0,
       mensalidade_sindical: 0,
       emprestimo_consignado: 0,
@@ -414,7 +415,7 @@ const EmployeesView: React.FC = () => {
                         max="100"
                         className="input-clean text-right pr-8 text-sm"
                         placeholder="20"
-                        value={editingEmployee?.insalubridade_perc ?? 20}
+                        value={editingEmployee?.insalubridade_perc ?? 0}
                         onChange={(e) => setEditingEmployee(p => ({ ...p!, insalubridade_perc: Number(e.target.value) || 0 }))}
                       />
                       <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs font-bold text-slate-400">%</span>
@@ -435,7 +436,7 @@ const EmployeesView: React.FC = () => {
                         max="100"
                         className="input-clean text-right pr-8 text-sm"
                         placeholder="11"
-                        value={editingEmployee?.assiduidade_perc ?? 11}
+                        value={editingEmployee?.assiduidade_perc ?? 0}
                         onChange={(e) => setEditingEmployee(p => ({ ...p!, assiduidade_perc: Number(e.target.value) || 0 }))}
                       />
                       <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs font-bold text-slate-400">%</span>

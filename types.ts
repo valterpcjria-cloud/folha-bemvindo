@@ -44,8 +44,8 @@ export interface Funcionario {
   local?: string;
   departamento?: string;
   salario_base?: number; // v4.52.0: fonte única do salário; alimenta rubrica 33 em competências abertas
-  insalubridade_perc?: number;      // v4.52.20: % insalubridade (padrão 20%)
-  assiduidade_perc?: number;        // v4.52.20: % assiduidade (padrão 11%)
+  insalubridade_perc?: number;      // v4.52.20: % insalubridade (Bem Vindo v1.1.0: padrão 0%)
+  assiduidade_perc?: number;        // v4.52.20: % assiduidade (Bem Vindo v1.1.0: padrão 0%)
   adic_tempo_servico_perc?: number; // v4.52.20: % adicional tempo serviço (padrão 0%)
   mensalidade_sindical?: number;    // v4.52.20: valor fixo R$ mensalidade sindical
   emprestimo_consignado?: number;   // v4.52.20: valor fixo R$ empréstimo consignado

@@ -177,8 +177,8 @@ elseif ($method == 'POST') {
         $bvCampos = bvCamposCadastro($conn, $data, (int)$empresa_id, $bvPodeVerPagamento);
 
         // Update - Garante que o funcionário pertence à empresa
-        $insalubPerc = isset($data['insalubridade_perc']) ? (float)$data['insalubridade_perc'] : 20.00;
-        $assidPerc   = isset($data['assiduidade_perc']) ? (float)$data['assiduidade_perc'] : 11.00;
+        $insalubPerc = isset($data['insalubridade_perc']) ? (float)$data['insalubridade_perc'] : 0.00; // Bem Vindo v1.1.0: padrão 0 (Frimelo: 20)
+        $assidPerc   = isset($data['assiduidade_perc']) ? (float)$data['assiduidade_perc'] : 0.00;  // Bem Vindo v1.1.0: padrão 0 (Frimelo: 11)
         $adicTSPerc  = isset($data['adic_tempo_servico_perc']) ? (float)$data['adic_tempo_servico_perc'] : 0.00;
         $mensSind    = isset($data['mensalidade_sindical']) ? (float)$data['mensalidade_sindical'] : 0.00;
         $emprestimo  = isset($data['emprestimo_consignado']) ? (float)$data['emprestimo_consignado'] : 0.00;
@@ -213,8 +213,8 @@ elseif ($method == 'POST') {
             exit;
         }
 
-        $insalubPerc = isset($data['insalubridade_perc']) ? (float)$data['insalubridade_perc'] : 20.00;
-        $assidPerc   = isset($data['assiduidade_perc']) ? (float)$data['assiduidade_perc'] : 11.00;
+        $insalubPerc = isset($data['insalubridade_perc']) ? (float)$data['insalubridade_perc'] : 0.00; // Bem Vindo v1.1.0: padrão 0 (Frimelo: 20)
+        $assidPerc   = isset($data['assiduidade_perc']) ? (float)$data['assiduidade_perc'] : 0.00;  // Bem Vindo v1.1.0: padrão 0 (Frimelo: 11)
         $adicTSPerc  = isset($data['adic_tempo_servico_perc']) ? (float)$data['adic_tempo_servico_perc'] : 0.00;
         $mensSind    = isset($data['mensalidade_sindical']) ? (float)$data['mensalidade_sindical'] : 0.00;
         $emprestimo  = isset($data['emprestimo_consignado']) ? (float)$data['emprestimo_consignado'] : 0.00;
