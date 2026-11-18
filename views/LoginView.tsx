@@ -43,9 +43,9 @@ const LoginView: React.FC<LoginViewProps> = ({ onLoginSuccess }) => {
           <div>
             <div className="flex items-center gap-4 mb-16">
               <div className="w-14 h-14 bg-gradient-to-tr from-sky-400 to-blue-600 rounded-2xl flex items-center justify-center font-bold text-3xl shadow-xl shadow-blue-500/30 border border-white/10 backdrop-blur-md">
-                F
+                B
               </div>
-              <span className="text-2xl font-black tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-white to-slate-300">Sistema Folha RH</span>
+              <span className="text-2xl font-black tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-white to-slate-300">Folha Bem Vindo</span>
             </div>
 
             <h1 className="text-5xl font-extrabold tracking-tight leading-[1.15] mb-6">
@@ -80,9 +80,9 @@ const LoginView: React.FC<LoginViewProps> = ({ onLoginSuccess }) => {
           {/* Header Mobile Only */}
           <div className="flex flex-col items-center mb-10 lg:hidden">
             <div className="w-16 h-16 bg-gradient-to-tr from-sky-500 to-blue-600 rounded-2xl flex items-center justify-center text-white font-bold text-4xl mb-6 shadow-xl shadow-blue-500/20">
-              F
+              B
             </div>
-            <h2 className="text-3xl font-extrabold text-slate-900 tracking-tight">Sistema RH</h2>
+            <h2 className="text-3xl font-extrabold text-slate-900 tracking-tight">Folha Bem Vindo</h2>
             <p className="text-slate-500 mt-2 font-medium">Folha Profissional</p>
           </div>
 
@@ -161,7 +161,7 @@ const LoginView: React.FC<LoginViewProps> = ({ onLoginSuccess }) => {
 
           <div className="mt-14 text-center">
             <p className="text-xs font-semibold text-slate-400">
-              &copy; {new Date().getFullYear()} Sistema Folha RH &bull; Versão {CONFIG.VERSION}
+              &copy; {new Date().getFullYear()} Folha Bem Vindo &bull; Versão {CONFIG.VERSION}
             </p>
           </div>
         </div>

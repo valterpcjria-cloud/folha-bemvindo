@@ -82,7 +82,7 @@ class RateLimiter
         // Tenta usar o diretório de logs do projeto
         $candidates = [
             dirname(__DIR__) . '/sys_logs/rate_limit/',
-            rtrim(sys_get_temp_dir(), '/') . '/frimelo_rate_limit/',
+            rtrim(sys_get_temp_dir(), '/') . '/bemvindo_rate_limit/',
         ];
 
         foreach ($candidates as $dir) {

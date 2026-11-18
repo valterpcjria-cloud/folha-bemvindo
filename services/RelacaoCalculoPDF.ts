@@ -46,7 +46,7 @@ export class RelacaoCalculoPDF {
     this.doc.setFontSize(8);
     
     // Linha 1: Empresa e Título
-    this.doc.text((empresa.razao_social || 'FRIGORIFICO FRIMELO LTDA').substring(0, 40), this.margin, this.currentY);
+    this.doc.text((empresa.razao_social || '').substring(0, 40), this.margin, this.currentY);
     this.doc.text(isSummary ? "RESUMO GERAL DA FOLHA" : "RELAÇÃO DE CÁLCULO MENSAL", this.pageWidth / 2, this.currentY, { align: 'center' });
     this.doc.text(`FOLHA: ${competencia}`, this.pageWidth - this.margin, this.currentY, { align: 'right' });
 

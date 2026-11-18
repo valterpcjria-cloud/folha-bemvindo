@@ -41,7 +41,7 @@ const ManualView: React.FC = () => {
             <div className="bg-sky-50 border border-sky-100 p-6 rounded-xl">
               <h3 className="text-xl font-bold text-sky-900 mb-3 flex items-center gap-2">
                 <HelpCircle className="text-sky-500" />
-                Bem-vindo ao Folha RH Frimelo
+                Bem-vindo à Folha Bem Vindo
               </h3>
               <p className="text-sky-800 leading-relaxed mb-4">
                 O <strong>Folha RH</strong> é uma plataforma completa e moderna para a gestão do seu Departamento Pessoal. Construída com tecnologia de ponta, ela garante que os cálculos de folha, controle de eventos corporativos e relatórios sejam emitidos com precisão cirúrgica e compliance.

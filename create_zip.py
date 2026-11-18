@@ -34,7 +34,7 @@ if res.returncode != 0:
     print("Erro: A compilação do frontend (npm run build) falhou!")
     sys.exit(1)
 
-filename = f'deploy-frimelo-{version}.zip'
+filename = f'deploy-bemvindo-{version}.zip'
 
 with zipfile.ZipFile(filename, 'w', zipfile.ZIP_DEFLATED) as zipf:
     # Add dist contents to root of zip

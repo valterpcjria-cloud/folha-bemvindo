@@ -91,7 +91,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
   };
 
   const isEdivanMelo = user?.email?.toLowerCase?.()?.endsWith('@edivanmelo.com');
-  const appTitle = isEdivanMelo ? 'Folha Edivan Melo' : 'Sistema RH';
+  const appTitle = isEdivanMelo ? 'Folha Edivan Melo' : 'Folha Bem Vindo';
 
   // Determine active label for header
   const activeItem = menuItems.find(item => item.path === location.pathname) ||
@@ -103,7 +103,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
       {/* Modern Sidebar (Dark Indigo/Slate) */}
       <aside className="w-64 flex flex-col shrink-0 bg-slate-900 border-r border-slate-800/50 z-50 shadow-2xl shadow-black/20">
         <div className="p-6 flex items-center gap-3 border-b border-slate-800/50">
-          <div className="w-8 h-8 bg-gradient-to-tr from-sky-600 to-sky-400 flex items-center justify-center font-bold text-lg text-white rounded-lg shadow-glow">F</div>
+          <div className="w-8 h-8 bg-gradient-to-tr from-sky-600 to-sky-400 flex items-center justify-center font-bold text-lg text-white rounded-lg shadow-glow">B</div>
           <div className="flex flex-col">
             <h1 className="text-sm font-bold text-white uppercase tracking-wider font-display">{appTitle}</h1>
             <span className="text-[10px] font-medium text-slate-400">v{CONFIG.VERSION}</span>

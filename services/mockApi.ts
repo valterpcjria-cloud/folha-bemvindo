@@ -155,12 +155,19 @@ export const api = {
   getCompanies: async () => {
     if (CONFIG.IS_MOCK) return {
       data: [
-        { id: 1, razao_social: 'Frigorífico Frimelo Ltda', cnpj: '19.953.437/0001-78', slug: 'frimelo', ativa: true, data_cadastro: '2024-01-01', total_funcionarios: 12 },
+        { id: 1, razao_social: 'Supermercado Bem Vindo', cnpj: '41.403.240/0001-14', slug: 'bemvindo', ativa: true, data_cadastro: '2024-01-01', total_funcionarios: 12 },
         { id: 2, razao_social: 'Supermercado Modelo', cnpj: '22.333.444/0001-55', slug: 'modelo', ativa: true, data_cadastro: '2024-02-10', total_funcionarios: 45 },
         { id: 3, razao_social: 'Transportadora Veloz', cnpj: '33.444.555/0001-66', slug: 'veloz', ativa: false, data_cadastro: '2024-02-12', total_funcionarios: 0 }
       ]
     };
     return fetchApi('/companies');
+  },
+
+  // Bem Vindo: razão social, CNPJ e cidade da empresa logada (cabeçalho do contracheque)
+  getEmpresaAtual: async (): Promise<{ razao_social: string; cnpj: string; nome_cidade?: string | null; uf?: string | null }> => {
+    if (CONFIG.IS_MOCK) return { razao_social: 'Supermercado Bem Vindo', cnpj: '41.403.240/0001-14', nome_cidade: 'Luziânia', uf: 'GO' };
+    const res = await fetchApi('/empresa_atual');
+    return res.data;
   },
 
   logout: () => {
@@ -775,7 +782,7 @@ export const api = {
   getSettings: async () => {
     if (CONFIG.IS_MOCK) return {
       data: {
-        RAZAO_SOCIAL: { valor: 'Frigorífico Frimelo Ltda', descricao: 'Razão Social da Empresa' },
+        RAZAO_SOCIAL: { valor: 'Supermercado Bem Vindo', descricao: 'Razão Social da Empresa' },
         CNPJ: { valor: '19.953.437/0001-78', descricao: 'CNPJ da Empresa' },
         CODIGO_SERIAL_ERP: { valor: '0001', descricao: 'Código para exportação contábil' }
       }

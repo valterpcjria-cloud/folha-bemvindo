@@ -90,9 +90,10 @@ elseif ($method == 'POST') {
                 ['RAZAO_SOCIAL', $data['razao_social'], 'TEXTO'],
                 ['CNPJ', $data['cnpj'] ?? '', 'TEXTO'],
                 ['CODIGO_SERIAL_ERP', 'GERADO-' . strtoupper($data['slug']), 'TEXTO'],
-                ['TETO_INSS', '7507.49', 'NUMERO'],
+                // Bem Vindo: valores 2026 (iguais aos de docker/banco/02_empresa_principal.sql)
+                ['TETO_INSS', '8475.55', 'NUMERO'],
                 ['ALIQUOTA_FGTS', '8.0', 'NUMERO'],
-                ['FAIXA_ISENCAO_IRRF', '2112.00', 'NUMERO'],
+                ['FAIXA_ISENCAO_IRRF', '2428.80', 'NUMERO'],
                 ['VALOR_DEDUCAO_DEPENDENTE', '189.59', 'NUMERO']
             ];
 
@@ -103,10 +104,13 @@ elseif ($method == 'POST') {
             }
 
             // 3. Criar Usuário Admin inicial para a empresa
+            $senhaTemporaria = null;
             if (!empty($data['admin_email'])) {
-                // v4.57.0 (C5): senha inicial 'frimelo123' (informada na tela) vale só até o 1º login
+                // Bem Vindo: senha temporária aleatória (mostrada uma vez na tela), troca obrigatória no 1º login.
+                // Antes: senha fixa 'frimelo123', igual para todas as empresas.
                 $sqlUser = "INSERT INTO usuarios (nome, email, senha_hash, perfil, ativo, id_empresa, must_change_password) VALUES (?, ?, ?, ?, ?, ?, 1)";
-                $senhaPadrao = password_hash('frimelo123', PASSWORD_DEFAULT);
+                $senhaTemporaria = AuthSession::gerarSenhaTemporaria();
+                $senhaPadrao = password_hash($senhaTemporaria, PASSWORD_DEFAULT);
                 $stmtUser = $conn->prepare($sqlUser);
                 $stmtUser->execute([
                     'Admin ' . $data['razao_social'],
@@ -122,7 +126,11 @@ elseif ($method == 'POST') {
             registrarLog($conn, $authUser['user_id'], 'EMPRESA', $newEmpresaId, 'CRIACAO', "Criou nova empresa SaaS: {$data['razao_social']}", 0);
 
             http_response_code(201);
-            echo json_encode(["success" => true, "id" => $newEmpresaId]);
+            $resposta = ["success" => true, "id" => $newEmpresaId];
+            if ($senhaTemporaria !== null) {
+                $resposta['senha_temporaria'] = $senhaTemporaria;
+            }
+            echo json_encode($resposta);
         }
         catch (Exception $e) {
             $conn->rollBack();
@@ -135,7 +143,7 @@ elseif ($method == 'DELETE') {
     requireRole($authUser, ['SUPERADMIN']);
     // Excluir empresa (Cuidado: cascata vai limpar tudo)
     $id = $_GET['id'] ?? null;
-    if ($id && $id > 1) { // Protege a Frimelo (ID 1)
+    if ($id && $id > 1) { // Protege a empresa principal (ID 1)
         $stmt = $conn->prepare("DELETE FROM empresas WHERE id = ?");
         $stmt->execute([$id]);
         registrarLog($conn, $authUser['user_id'], 'EMPRESA', $id, 'EXCLUSAO', "Removeu empresa SaaS ID $id", 0);

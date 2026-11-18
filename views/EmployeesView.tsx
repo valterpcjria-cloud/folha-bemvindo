@@ -595,7 +595,7 @@ const EmployeesView: React.FC = () => {
                   <input
                     type="text"
                     className="input-clean"
-                    placeholder="165"
+                    placeholder="Código na contabilidade"
                     value={editingEmployee?.empresa_codigo || ''}
                     onChange={(e) => setEditingEmployee(p => ({ ...p!, empresa_codigo: e.target.value }))}
                   />

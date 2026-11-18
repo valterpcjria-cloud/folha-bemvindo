@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { X, Printer, FileText, Download, ChevronLeft, ChevronRight } from 'lucide-react';
 import { Funcionario, EventoFolha, Lancamento } from '../types';
 import { calcularTodosEncargos } from '../utils/taxCalculations';
+import { useEmpresaAtual } from '../hooks/useEmpresaAtual';
 
 interface PaystubViewProps {
   employee?: Funcionario;
@@ -30,6 +31,7 @@ const PaystubView: React.FC<PaystubViewProps> = ({
 }) => {
   const [isVisible, setIsVisible] = useState(false);
   const [currentIndex, setCurrentIndex] = useState(0);
+  const { empresa } = useEmpresaAtual();
 
   useEffect(() => {
     setIsVisible(true);
@@ -99,11 +101,12 @@ const PaystubView: React.FC<PaystubViewProps> = ({
         {/* Header */}
         <div className="grid grid-cols-[3.5fr_2fr] border-b border-black">
           <div className="p-1.5 border-r border-black flex flex-col justify-center">
-            <h1 className="font-bold text-[11px] uppercase tracking-tight">0165-FRIGORIFICO FRIMELO LTDA</h1>
-            <p className="uppercase text-[9px] font-medium">FRIGORIFICO FRIMELO LTDA Luziania-GO</p>
+            {/* Bem Vindo: dados da empresa vêm do cadastro (antes: Frimelo fixo no código) */}
+            <h1 className="font-bold text-[11px] uppercase tracking-tight">{empresa?.razao_social || ''}</h1>
+            <p className="uppercase text-[9px] font-medium">{empresa ? `${empresa.razao_social}${empresa.cidadeUf ? ` ${empresa.cidadeUf}` : ''}` : ''}</p>
             <div className="mt-1 grid grid-cols-[auto_1fr_auto_1fr] gap-x-2">
               <span className="font-bold">CNPJ</span>
-              <span>19.953.437/0001-78</span>
+              <span>{empresa?.cnpj || ''}</span>
               <span className="font-bold border-l border-black pl-2">CPF:</span>
               <span>{formatCPF(emp.cpf)}</span>
             </div>
@@ -132,7 +135,7 @@ const PaystubView: React.FC<PaystubViewProps> = ({
             <div className="p-0.5 border-r border-black font-bold text-center">{emp.id_contrato}</div>
             <div className="p-0.5 border-r border-black font-bold pl-2 uppercase">{emp.nome}</div>
             <div className="p-0.5 border-r border-black text-center">{emp.cbo || '784205'}</div>
-            <div className="p-0.5 border-r border-black text-center">{emp.empresa_codigo || '165'}</div>
+            <div className="p-0.5 border-r border-black text-center">{emp.empresa_codigo || ''}</div>
             <div className="p-0.5 border-r border-black text-center">{emp.local || '1'}</div>
             <div className="p-0.5 border-r border-black text-center">{emp.departamento || '999'}</div>
             <div className="p-0.5 text-center">01</div>
@@ -324,7 +327,7 @@ const PaystubView: React.FC<PaystubViewProps> = ({
           <div className="mt-8 p-6 rounded-2xl bg-white/5 border border-white/5 max-w-[210mm] mx-auto">
             <h4 className="text-[10px] font-black text-white/40 uppercase tracking-widest mb-3">Informações Legais</h4>
             <p className="text-[10px] text-white/30 leading-relaxed italic">
-              Este documento é uma representação digital fiel do demonstrativo de pagamento gerado pelo Sistema RH. A formatação segue os padrões exigidos pela legislação trabalhista brasileira (CLT), incluindo bases de cálculo de IRRF, INSS e FGTS.
+              Este documento é uma representação digital fiel do demonstrativo de pagamento gerado pela Folha Bem Vindo. A formatação segue os padrões exigidos pela legislação trabalhista brasileira (CLT), incluindo bases de cálculo de IRRF, INSS e FGTS.
             </p>
           </div>
         </div>

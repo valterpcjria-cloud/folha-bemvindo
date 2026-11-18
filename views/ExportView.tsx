@@ -100,7 +100,7 @@ const ExportView: React.FC = () => {
     const url = window.URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `FolhaFrimelo_${comp?.mes}_${comp?.ano}.xlsx`;
+    a.download = `FolhaBemVindo_${comp?.mes}_${comp?.ano}.xlsx`;
     a.click();
     window.URL.revokeObjectURL(url);
   };
@@ -125,7 +125,7 @@ const ExportView: React.FC = () => {
     const url = window.URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `Importacao_Frimelo_${comp?.mes}_${comp?.ano}.txt`;
+    a.download = `Importacao_BemVindo_${comp?.mes}_${comp?.ano}.txt`;
     a.click();
   };
 
@@ -169,7 +169,7 @@ const ExportView: React.FC = () => {
     const url = window.URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `FolhaFrimelo_${comp?.mes}_${comp?.ano}.csv`;
+    a.download = `FolhaBemVindo_${comp?.mes}_${comp?.ano}.csv`;
     a.click();
     window.URL.revokeObjectURL(url);
   };
@@ -361,10 +361,10 @@ const ExportView: React.FC = () => {
           <div className="bg-sky-50 border border-sky-100 rounded-xl p-6">
             <h4 className="flex items-center gap-2 font-bold text-sky-800 mb-2">
               <CheckCircle2 size={18} />
-              Layout Frimelo Validado
+              Layout de Importação da Contabilidade
             </h4>
             <p className="text-sm text-sky-700 leading-relaxed">
-              O arquivo gerado segue rigorosamente o layout de importação do sistema Frimelo (v2024). Certifique-se de que os códigos de eventos estejam mapeados corretamente antes de exportar.
+              O arquivo gerado segue o layout de importação usado pela contabilidade. Certifique-se de que os códigos de eventos estejam mapeados corretamente antes de exportar.
             </p>
           </div>
 

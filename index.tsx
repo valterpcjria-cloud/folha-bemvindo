@@ -7,7 +7,7 @@ import { CONFIG } from './config';
 
 const rootEl = document.getElementById('root');
 if (rootEl) {
-  document.title = `Sistema RH v${CONFIG.VERSION}`;
+  document.title = `Folha Bem Vindo v${CONFIG.VERSION}`;
   const root = ReactDOM.createRoot(rootEl);
   root.render(
     <React.StrictMode>

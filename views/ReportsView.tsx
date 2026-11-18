@@ -312,7 +312,7 @@ const ReportsView: React.FC = () => {
         <div className="bg-blue-50 p-6 rounded-2xl border border-blue-100">
           <h3 className="text-blue-900 font-bold text-sm mb-2">Suporte Contábil</h3>
           <p className="text-blue-700/70 text-xs leading-relaxed">
-            Dúvidas sobre os cálculos ou formatos de exportação? Entre em contato com o suporte técnico Frimelo.
+            Dúvidas sobre os cálculos ou formatos de exportação? Entre em contato com o suporte técnico.
           </p>
         </div>
       </div>

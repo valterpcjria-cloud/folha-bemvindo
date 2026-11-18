@@ -1,6 +1,7 @@
 import React, { useEffect } from 'react';
 import { Funcionario, EventoFolha, Lancamento } from '../types';
 import { calcularTodosEncargos } from '../utils/taxCalculations';
+import { useEmpresaAtual, EmpresaCabecalho } from '../hooks/useEmpresaAtual';
 
 interface PrintBatchViewProps {
   employees: Funcionario[];
@@ -16,11 +17,13 @@ function SinglePaystubPrint({
   events,
   lancamentosMap,
   competenciaLabel,
+  empresa,
 }: {
   emp: Funcionario;
   events: EventoFolha[];
   lancamentosMap: Record<string, Partial<Lancamento>>;
   competenciaLabel: string;
+  empresa: EmpresaCabecalho | null;
 }) {
   const empLancs = Object.keys(lancamentosMap)
     .filter(k => k.startsWith(`${emp.id}_`))
@@ -78,9 +81,10 @@ function SinglePaystubPrint({
       {/* HEADER */}
       <div className="slip-header">
         <div className="slip-company">
-          <strong>0165-FRIGORIFICO FRIMELO LTDA</strong>
-          <span>FRIGORIFICO FRIMELO LTDA – Luziânia-GO</span>
-          <span>CNPJ: 19.953.437/0001-78 &nbsp;|&nbsp; CPF: {formatCPF(emp.cpf)}</span>
+          {/* Bem Vindo: dados da empresa vêm do cadastro (antes: Frimelo fixo no código) */}
+          <strong>{empresa?.razao_social || ''}</strong>
+          <span>{empresa ? `${empresa.razao_social}${empresa.cidadeUf ? ` – ${empresa.cidadeUf}` : ''}` : ''}</span>
+          <span>CNPJ: {empresa?.cnpj || ''} &nbsp;|&nbsp; CPF: {formatCPF(emp.cpf)}</span>
         </div>
         <div className="slip-title">
           <strong>Demonstrativo de Pagamento de Salário</strong>
@@ -102,7 +106,7 @@ function SinglePaystubPrint({
           <span>{emp.id_contrato}</span>
           <span className="emp-name">{emp.nome}</span>
           <span>{emp.cbo || '784205'}</span>
-          <span>{emp.empresa_codigo || '165'}</span>
+          <span>{emp.empresa_codigo || ''}</span>
           <span>{emp.local || '1'}</span>
           <span>{emp.departamento || '999'}</span>
           <span>01</span>
@@ -202,13 +206,17 @@ export const PrintBatchView: React.FC<PrintBatchViewProps> = ({
     pages.push(employees.slice(i, i + STUBS_PER_PAGE));
   }
 
+  const { empresa, pronto } = useEmpresaAtual();
+
   // Dispara window.print() automaticamente quando o componente montar
+  // (Bem Vindo: espera os dados da empresa do cabeçalho carregarem)
   useEffect(() => {
+    if (!pronto) return;
     const timer = setTimeout(() => {
       window.print();
     }, 600);
     return () => clearTimeout(timer);
-  }, []);
+  }, [pronto]);
 
   return (
     <>
@@ -237,6 +245,7 @@ export const PrintBatchView: React.FC<PrintBatchViewProps> = ({
                   events={events}
                   lancamentosMap={lancamentosMap}
                   competenciaLabel={competenciaLabel}
+                  empresa={empresa}
                 />
               </div>
             ))}

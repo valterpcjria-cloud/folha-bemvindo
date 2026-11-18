@@ -116,7 +116,7 @@ class ContrachequePDF extends TCPDF
         // Linha 2 — endereço
         $this->SetFont(self::FONT, '', self::FONT_SIZE);
         $this->SetXY($x + 1, $y + self::LINE_H + 0.5);
-        $this->Cell($w * 0.55, self::LINE_H, "{$e['razao_social']} - {$e['cidade']}-{$e['uf']}", 0, 0, 'L');
+        $this->Cell($w * 0.55, self::LINE_H, "{$e['razao_social']} - " . ($e['cidade'] ?? $e['nome_cidade'] ?? '') . "-" . ($e['uf'] ?? ''), 0, 0, 'L');
 
         // Linha 3 — CNPJ
         $this->SetXY($x + 1, $y + self::LINE_H * 2 + 0.5);

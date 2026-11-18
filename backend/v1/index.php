@@ -171,6 +171,11 @@ $router->add('setores', function () use ($conn, $authUser, $route_parts) {
     require_once 'routes/setores.php';
 });
 
+// Rota: dados da empresa logada para cabeçalhos (Bem Vindo)
+$router->add('empresa_atual', function () use ($conn, $authUser) {
+    require_once 'routes/empresa_atual.php';
+});
+
 // Rota: Dependentes
 $router->add('dependentes', function () use ($conn, $authUser) {
     require_once 'routes/dependentes.php';

@@ -11,7 +11,7 @@ class JWT
     private static $secret = null;
 
     /** v4.58.0: cookie HttpOnly que carrega o token de sessão */
-    public const COOKIE_NAME = 'frimelo_session';
+    public const COOKIE_NAME = 'bemvindo_session';
 
     /** Origem do token validado na requisição atual: 'header' | 'cookie' | null */
     private static $tokenSource = null;

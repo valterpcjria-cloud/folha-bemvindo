@@ -43,7 +43,7 @@ class EspelhoFolhaPDF extends TCPDF
         $this->tipoFolha = $tipoFolha;
         $this->usuario = $usuario;
 
-        $this->SetCreator('Sistema Folha Frimelo');
+        $this->SetCreator('Folha Bem Vindo');
         $this->SetTitle('Relação de Cálculo - ' . $competenciaInicio . ' a ' . $competenciaFim);
         $this->SetMargins(self::MARGIN_L, self::MARGIN_T + 22, self::MARGIN_R); 
         $this->SetAutoPageBreak(false); 
@@ -82,7 +82,7 @@ class EspelhoFolhaPDF extends TCPDF
         $this->SetXY(self::MARGIN_L, $y);
         $this->Cell(0, self::LINE_H, "Bairro: " . ($e['bairro'] ?? 'ZONA RURAL'), 0, 0, 'L');
         $this->SetXY(self::MARGIN_L, $y);
-        $this->Cell(0, self::LINE_H, "Município: " . ($e['cidade'] ?? 'Luziânia') . " - " . ($e['uf'] ?? 'GO'), 0, 0, 'R');
+        $this->Cell(0, self::LINE_H, "Município: " . ($e['cidade'] ?? $e['nome_cidade'] ?? 'Luziânia') . " - " . ($e['uf'] ?? 'GO'), 0, 0, 'R');
         $y += self::LINE_H;
 
         $this->SetXY(self::MARGIN_L, $y);

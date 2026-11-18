@@ -12,7 +12,7 @@ export const THEME = {
         viewSwitch: 50,
     },
     strings: {
-        appName: 'FOLHA_FRIMELO',
+        appName: 'FOLHA_BEMVINDO',
         portalName: 'PORTAL_OPERATOR',
         initSystem: 'INIT_CORE_SYSTEM',
         booting: 'BOOTING_UP // HYPER_SPEED_CORE',

@@ -8,13 +8,9 @@ ini_set('display_errors', 0);
 error_reporting(E_ALL);
 
 // 2. CORS Seguro - Whitelist de origens permitidas
+// Bem Vindo: origens da Frimelo removidas; o endereço oficial vem de APP_ORIGIN (abaixo)
 $allowed_origins = [
-    'https://frimelo.meusistema.com.br',
-    'http://frimelo.meusistema.com.br',
-    'https://frimelo.meusistemanaweb.com.br',
-    'http://frimelo.meusistemanaweb.com.br',
-    'https://app.frimelo.com.br',
-    'http://app.frimelo.com.br',
+    'https://bemvindo.luzitec.cnt.br',
 ];
 
 // Bem Vindo (Docker): endereço oficial do sistema vem da variável APP_ORIGIN (ex.: https://bemvindo.luzitec.cnt.br)

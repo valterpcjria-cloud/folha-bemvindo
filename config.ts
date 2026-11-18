@@ -4,7 +4,7 @@ const getEnvVar = (key: string, fallback: string = ''): string => {
 };
 
 export const CONFIG = {
-  SERVER_IP: 'frimelo.meusistemaweb.com.br',
+  SERVER_IP: 'bemvindo.luzitec.cnt.br',
   API_BASE_URL: '/backend/v1',
 
   // Alterado para FALSE pois o banco de dados já foi configurado com sucesso!

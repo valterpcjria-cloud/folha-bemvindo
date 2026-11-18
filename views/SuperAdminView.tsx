@@ -14,6 +14,7 @@ import {
     Trash2
 } from 'lucide-react';
 import { api, authHeaders } from '../services/mockApi';
+import SenhaTemporariaModal from '../components/SenhaTemporariaModal';
 
 interface Empresa {
     id: number;
@@ -46,6 +47,7 @@ const SuperAdminView: React.FC = () => {
         vencimento_dia: 10
     });
     const [saving, setSaving] = useState(false);
+    const [senhaTemporaria, setSenhaTemporaria] = useState<{ email: string; senha: string } | null>(null);
 
     const loadData = async () => {
         setLoading(true);
@@ -80,6 +82,10 @@ const SuperAdminView: React.FC = () => {
             });
 
             if (response.ok) {
+                const res = await response.json().catch(() => ({}));
+                if (res?.senha_temporaria) {
+                    setSenhaTemporaria({ email: formData.admin_email, senha: res.senha_temporaria });
+                }
                 setIsModalOpen(false);
                 setFormData({
                     id: undefined,
@@ -453,7 +459,7 @@ const SuperAdminView: React.FC = () => {
                                             placeholder="admin@empresa.com.br"
                                         />
                                         <p className="text-[10px] text-slate-400 mt-2 font-bold italic">
-                                            * A senha inicial do novo admin será: <span className="text-indigo-600">frimelo123</span> (troca obrigatória no 1º acesso)
+                                            * Uma senha temporária será gerada e mostrada uma única vez (troca obrigatória no 1º acesso)
                                         </p>
                                     </div>
                                 )}
@@ -478,6 +484,14 @@ const SuperAdminView: React.FC = () => {
                         </form>
                     </div >
                 </div >
+            )}
+
+            {senhaTemporaria && (
+                <SenhaTemporariaModal
+                    email={senhaTemporaria.email}
+                    senha={senhaTemporaria.senha}
+                    onClose={() => setSenhaTemporaria(null)}
+                />
             )}
         </div >
     );

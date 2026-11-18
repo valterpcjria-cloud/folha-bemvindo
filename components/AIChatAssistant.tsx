@@ -144,7 +144,7 @@ const AIChatAssistant: React.FC = () => {
                   </div>
                 </div>
                 <div className="flex flex-col">
-                  <span className="font-bold text-sm tracking-wide leading-none">Frimelo AI</span>
+                  <span className="font-bold text-sm tracking-wide leading-none">Bem Vindo AI</span>
                   <p className="text-[10px] text-blue-300 mt-1 uppercase font-black tracking-widest flex items-center gap-1">
                     <span className="w-1.5 h-1.5 bg-blue-400 rounded-full animate-pulse"></span>
                     Online
