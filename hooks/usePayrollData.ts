@@ -781,6 +781,8 @@ export const usePayrollData = () => {
     const [feriados, setFeriados] = useState<Array<{ data: string; recorrente?: number | boolean; ativo?: number | boolean; tipo?: string; uf?: string; cidade?: string }>>([]);
     // v4.54.0: funcionarios com atestado na competência atual → perdem Assiduidade (833)
     const [atestados, setAtestados] = useState<Set<number>>(new Set());
+    // Bem Vindo v1.1.0: dias de cada atestado (só informativo p/ a contabilidade; não entra no cálculo)
+    const [atestadoDias, setAtestadoDias] = useState<Record<number, number | null>>({});
     // v4.55.0: edições no grid ainda não persistidas (aviso ao sair/trocar competência)
     const [isDirty, setIsDirty] = useState(false);
     const lancamentosRef = useRef(lancamentos);
@@ -858,10 +860,11 @@ export const usePayrollData = () => {
                         const [lancsData, dias, atestList] = await Promise.all([
                             api.getLancamentos(comp.id),
                             api.calcularDiasUteisMes(comp.id).catch(() => null),
-                            api.getAtestados(comp.id).catch(() => [])
+                            api.getAtestados(comp.id).catch(() => ({ ids: [] as number[], dias: {} }))
                         ]);
-                        const atestSet = new Set<number>(atestList);
+                        const atestSet = new Set<number>(atestList.ids);
                         setAtestados(atestSet);
+                        setAtestadoDias(atestList.dias);
 
                         // Fonte primária: backend (considera UF/cidade/móveis + feriados DB).
                         // Fallback: cálculo local com feriados vindos de Gestão de Feriados + móveis.
@@ -902,10 +905,11 @@ export const usePayrollData = () => {
             const [data, dias, atestList] = await Promise.all([
                 api.getLancamentos(comp.id),
                 api.calcularDiasUteisMes(comp.id).catch(() => null),
-                api.getAtestados(comp.id).catch(() => [])
+                api.getAtestados(comp.id).catch(() => ({ ids: [] as number[], dias: {} }))
             ]);
-            const atestSet = new Set<number>(atestList);
+            const atestSet = new Set<number>(atestList.ids);
             setAtestados(atestSet);
+            setAtestadoDias(atestList.dias);
 
             const newDias = dias ?? calcDiasComFeriados(comp.mes, comp.ano, feriados);
             setDiasCalendario({ dias_uteis: newDias.dias_uteis, dias_dsr: newDias.dias_dsr });
@@ -1234,6 +1238,7 @@ export const usePayrollData = () => {
         const funcsCalc = filtrarVisiveis(funcionarios, true);
         // Atualização otimista: novo set + recálculo (assiduidade → INSS/IRRF/FGTS)
         setAtestados(novoSet);
+        if (!novoTem) setAtestadoDias(prev => ({ ...prev, [funcionarioId]: null })); // servidor apaga a linha (e os dias)
         setLancamentos(prev => recalcularCascataCompleta(prev, eventos, funcsCalc, diasCalendario.dias_uteis, diasCalendario.dias_dsr, novoSet));
         try {
             await api.setAtestado(funcionarioId, selectedComp.id, novoTem);
@@ -1243,6 +1248,21 @@ export const usePayrollData = () => {
             setLancamentos(prev => recalcularCascataCompleta(prev, eventos, funcsCalc, diasCalendario.dias_uteis, diasCalendario.dias_dsr, atestados));
         }
     }, [selectedComp, atestados, funcionarios, eventos, diasCalendario]);
+
+    // Bem Vindo v1.1.0: grava a quantidade de dias de um atestado já marcado (não recalcula nada:
+    // a Assiduidade depende só de existir o atestado).
+    const setDiasAtestado = useCallback(async (funcionarioId: number, dias: number | null) => {
+        if (!selectedComp || selectedComp.status !== StatusCompetencia.ABERTA) return;
+        if (!atestados.has(funcionarioId)) return;
+        const anterior = atestadoDias[funcionarioId] ?? null;
+        if (anterior === dias) return;
+        setAtestadoDias(prev => ({ ...prev, [funcionarioId]: dias }));
+        try {
+            await api.setAtestado(funcionarioId, selectedComp.id, true, dias);
+        } catch (e) {
+            setAtestadoDias(prev => ({ ...prev, [funcionarioId]: anterior }));
+        }
+    }, [selectedComp, atestados, atestadoDias]);
 
     // Cálculo de totais por funcionário
     const totalsByFunc = useMemo((): Record<number, FuncTotals> => {
@@ -1296,6 +1316,7 @@ export const usePayrollData = () => {
         isLoading,
         loadError,
         atestados,
+        atestadoDias,
         temAlteracoesNaoSalvas,
 
         // Totais calculados
@@ -1308,5 +1329,6 @@ export const usePayrollData = () => {
         handleSave,
         getLancamentosForEmployee,
         toggleAtestado,
+        setDiasAtestado,
     };
 };

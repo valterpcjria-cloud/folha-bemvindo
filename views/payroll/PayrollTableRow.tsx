@@ -4,9 +4,10 @@
  */
 
 import React, { useState } from 'react';
-import { Eye, CheckSquare, Square, Lock, FileCheck2 } from 'lucide-react';
+import { CheckSquare, Square, Lock } from 'lucide-react';
 import { Funcionario, EventoFolha, Lancamento, Unidade } from '../../types';
 import { FuncTotals } from '../../hooks/usePayrollData';
+import FuncionarioCell from './FuncionarioCell';
 import { decimalToHM, parseHMToDecimal } from '../../utils/timeHM';
 import { maskBRL, parseBRL, formatBRL } from '../../utils/currency';
 
@@ -126,6 +127,11 @@ interface PayrollTableRowProps {
     temAtestado: boolean;
     onToggleAtestado: (funcId: number) => void;
     compAberta: boolean;
+    // Bem Vindo v1.1.0: etiquetas (aniversário/admissão) e dias de atestado
+    compMes?: number;
+    compAno?: number;
+    diasAtestado: number | null;
+    onDiasAtestado: (funcId: number, dias: number | null) => void;
 }
 
 const PayrollTableRow: React.FC<PayrollTableRowProps> = ({
@@ -140,6 +146,10 @@ const PayrollTableRow: React.FC<PayrollTableRowProps> = ({
     temAtestado,
     onToggleAtestado,
     compAberta,
+    compMes,
+    compAno,
+    diasAtestado,
+    onDiasAtestado,
 }) => {
     const liquido = (totals.proventos || 0) - (totals.descontos || 0);
 
@@ -157,38 +167,17 @@ const PayrollTableRow: React.FC<PayrollTableRowProps> = ({
 
             {/* Info do Funcionário */}
             <td className={`px-6 py-3 border-r border-slate-100 sticky left-12 z-20 shadow-[4px_0_8px_rgba(0,0,0,0.06)] ${isSelected ? 'bg-sky-50' : 'bg-white group-hover/row:bg-slate-50'}`}>
-                <div className="flex items-center justify-between">
-                    <div className="flex flex-col gap-1">
-                        <span className="font-medium text-slate-800">{funcionario.nome}</span>
-                        <span className="text-[10px] text-slate-400 font-mono">
-                            MAT: {funcionario.id_contrato}
-                            {/* Bem Vindo (Fase A.2): cargo visível para conferir a hierarquia do setor */}
-                            {funcionario.cargo && <span className="font-sans text-slate-500"> · {funcionario.cargo}</span>}
-                        </span>
-                        {/* v4.54.0: Atestado — zera Assiduidade (833) na competência. Só em comp aberta. */}
-                        {compAberta && (
-                            <button
-                                onClick={() => onToggleAtestado(funcionario.id)}
-                                title={temAtestado ? 'Atestado informado — Assiduidade perdida. Clique para remover.' : 'Marcar atestado (perde Assiduidade)'}
-                                className={`mt-0.5 inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full border text-[10px] font-bold uppercase tracking-wider transition-all w-fit active:scale-95 ${
-                                    temAtestado
-                                        ? 'bg-amber-100 text-amber-700 border-amber-200 hover:bg-amber-200'
-                                        : 'bg-slate-50 text-slate-400 border-slate-200 hover:text-amber-600 hover:border-amber-200'
-                                }`}
-                            >
-                                <FileCheck2 size={12} />
-                                {temAtestado ? 'Atestado ✓' : 'Atestado'}
-                            </button>
-                        )}
-                    </div>
-                    <button
-                        onClick={() => onViewPaystub(funcionario)}
-                        className="text-slate-400 hover:text-emerald-600 p-1.5 transition-colors bg-slate-50 hover:bg-slate-100 rounded border border-slate-200"
-                        title="Ver Contracheque"
-                    >
-                        <Eye size={16} />
-                    </button>
-                </div>
+                <FuncionarioCell
+                    funcionario={funcionario}
+                    compMes={compMes}
+                    compAno={compAno}
+                    compAberta={compAberta}
+                    temAtestado={temAtestado}
+                    diasAtestado={diasAtestado}
+                    onToggleAtestado={onToggleAtestado}
+                    onDiasAtestado={onDiasAtestado}
+                    onViewPaystub={onViewPaystub}
+                />
             </td>
 
             {/* Células de Eventos */}

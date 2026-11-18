@@ -70,6 +70,12 @@ export interface Funcionario {
   chave_pix?: string | null;
 }
 
+/** Bem Vindo v1.1.0: atestados da competência (GET /atestados). dias: null = não informado */
+export interface AtestadosCompetencia {
+  ids: number[];
+  dias: Record<number, number | null>;
+}
+
 export type TipoContrato = 'CLT' | 'PJ' | 'ESTAGIO' | 'OUTRO';
 export type ModalidadePagamento = 'BANCO' | 'PIX' | 'LOJA';
 

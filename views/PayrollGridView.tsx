@@ -59,7 +59,9 @@ const PayrollGridView: React.FC = () => {
     handleSave,
     getLancamentosForEmployee,
     atestados,
+    atestadoDias,
     toggleAtestado,
+    setDiasAtestado,
     temAlteracoesNaoSalvas,
   } = usePayrollData();
 
@@ -257,6 +259,10 @@ const PayrollGridView: React.FC = () => {
       temAtestado={atestados.has(func.id)}
       onToggleAtestado={toggleAtestado}
       compAberta={isCompAberta}
+      compMes={selectedComp?.mes}
+      compAno={selectedComp?.ano}
+      diasAtestado={atestadoDias[func.id] ?? null}
+      onDiasAtestado={setDiasAtestado}
     />
   );
 

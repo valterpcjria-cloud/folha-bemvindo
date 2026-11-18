@@ -1,5 +1,5 @@
 
-import { Funcionario, EventoFolha, Competencia, Lancamento, StatusFuncionario, StatusCompetencia, AuditLog, Unidade, DsrCalculado, User, Setor, Cargo } from '../types';
+import { Funcionario, EventoFolha, Competencia, Lancamento, StatusFuncionario, StatusCompetencia, AuditLog, Unidade, DsrCalculado, User, Setor, Cargo, AtestadosCompetencia } from '../types';
 import { MANDATORY_EVENTS } from '../constants';
 import { CONFIG } from '../config';
 import { findValue } from '../utils/dataHelpers';
@@ -243,15 +243,20 @@ export const api = {
   },
 
   // --- Atestados (perda de Assiduidade por competência) ---
-  getAtestados: async (competenciaId: number): Promise<number[]> => {
-    if (CONFIG.IS_MOCK) return [];
+  // Bem Vindo v1.1.0: também devolve os dias de cada atestado (null = não informado)
+  getAtestados: async (competenciaId: number): Promise<AtestadosCompetencia> => {
+    if (CONFIG.IS_MOCK) return { ids: [], dias: {} };
     const res = await fetchApi(`/atestados?competencia_id=${competenciaId}`);
-    return (res?.data as number[]) ?? [];
+    return { ids: (res?.data as number[]) ?? [], dias: (res?.dias as Record<number, number | null>) ?? {} };
   },
-  setAtestado: (funcionarioId: number, competenciaId: number, temAtestado: boolean) =>
+  // `dias` só vai no corpo quando informado (undefined = manter os dias já gravados)
+  setAtestado: (funcionarioId: number, competenciaId: number, temAtestado: boolean, dias?: number | null) =>
     fetchApi('/atestados', {
       method: 'POST',
-      body: JSON.stringify({ funcionario_id: funcionarioId, competencia_id: competenciaId, tem_atestado: temAtestado })
+      body: JSON.stringify({
+        funcionario_id: funcionarioId, competencia_id: competenciaId, tem_atestado: temAtestado,
+        ...(dias !== undefined ? { dias } : {})
+      })
     }),
 
   // --- Setores e cargos (Bem Vindo, Fase A.1) ---
