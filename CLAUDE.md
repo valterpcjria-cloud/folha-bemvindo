@@ -14,7 +14,7 @@ Sempre que você (AI) for analisar, criar features ou debugar código neste proj
 ## ⚠️ 0. O QUE É ESTE PROJETO (ler primeiro)
 - **Fork da Folha Frimelo (base v4.58.1)**, criado em 2026-11-17 para o **Supermercado Bem Vindo** (Luziânia-GO, ~70 colaboradores, 8 setores). Versão própria recomeça em **1.0.0** (atual: **v1.2.0**, 2026-11-26).
 - **NUNCA alterar `/home/valterpcjria/FOLHA FRIMELO`** (outro sistema, em produção na Hostgator). Lá é só leitura. Correção que valha para os dois: avisar o Valter, não aplicar na Frimelo.
-- **Produção:** VPS Hostinger da Luzitec (`ssh luzitec-vps`), em Docker, em `/opt/bemvindo` (app em `127.0.0.1:8090` + MariaDB 11.4 próprio). Endereço `https://bemvindo.luzitec.cnt.br` (Caddy já configurado; aguardando DNS). Até o DNS: túnel `ssh -N -L 8090:127.0.0.1:8090 luzitec-vps` → http://localhost:8090.
+- **Produção:** VPS Hostinger da Luzitec (`ssh luzitec-vps`), em Docker, em `/opt/bemvindo` (app em `127.0.0.1:8090` + MariaDB 11.4 próprio). Endereço `https://bemvindo.luzitec.cnt.br` (DNS e HTTPS Let's Encrypt OK desde 2026-11-26). Plano B: túnel `ssh -N -L 8090:127.0.0.1:8090 luzitec-vps` → http://localhost:8090.
 - **A mesma VPS roda o CRM da Luzitec em produção.** Nada pode afetá-lo: Caddy compartilhado (`/opt/luzitec/proxy/Caddyfile`), cron/timers e backup do CRM não são tocados. Conferir `https://crm.luzitec.cnt.br/` → 307 depois de qualquer mexida.
 - **Contabilidade é a oficial**: cálculos do sistema são prévia. P1–P30 respondidas em 25/11/2026 (regras em SPEC §0.6, v1.2.0); o que ficou em aberto está na 2ª rodada (E1–E15 escritório, B1–B12 Bem Vindo). **Não inventar regra** — esperar a resposta.
 - **Códigos de rubrica = os do Questor** (importação do escritório): código que já existia na Frimelo nunca muda (INSS 35, IRRF 1920...); rubrica só do Bem Vindo usa o código da lista deles.
@@ -232,7 +232,7 @@ Se precisar adicionar nova rubrica do tipo "valor fixo" (como Gratificação):
 - **Aguardando 2ª rodada (E1–E15 / B1–B12):** base da HE e divisor, insalubridade por função, DSR em faltas/suspensão, códigos pendentes, auxílios (859/689/902/687), quebra de caixa 834, produtividade 566, bônus aniversário 694, salário-família, 13º/férias/rescisão, encargos do Simples, retorno oficial e conciliação.
 - Fase B (controles internos): adiantamentos (vale dia 21, convênios), saldo a pagar, pagamento banco/Pix/loja e conferência; status de competência em 6 etapas; perfis DP/contabilidade/diretor.
 - Relatório para a contabilidade (HE em horas, faltas/atestados em dias) e os demais relatórios do documento de requisitos.
-- DNS `bemvindo.luzitec.cnt.br` (terceiro cria) → conferir HTTPS. CEP da empresa. Feriados municipais de Luziânia.
+- CEP da empresa. Feriados municipais de Luziânia.
 - Herdadas da Frimelo: remover transição v4.58.0 (`Authorization` legado), scripts `.php` soltos, CSP enforced, erro TS em `FormulasView.tsx`.
 
 ---

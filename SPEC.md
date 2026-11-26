@@ -23,7 +23,7 @@
 | Imagem | `folha-bemvindo:${IMAGEM_TAG}`; build local (`docker/Dockerfile`, Node 22 → php:8.3-apache com `calendar gd bcmath pdo_mysql`) levado por `docker save \| ssh docker load` (a VPS não tem o código) |
 | Segredos | `/opt/bemvindo/.env` (600), gerados na VPS; nunca no git/imagem |
 | HTTPS | Caddy compartilhado (`luzitec-proxy`, `/opt/luzitec/proxy/Caddyfile`): bloco `bemvindo.luzitec.cnt.br` → `127.0.0.1:8090`, antes do catch-all |
-| Acesso sem DNS | `ssh -N -L 8090:127.0.0.1:8090 luzitec-vps` → http://localhost:8090 |
+| Acesso (plano B, sem o domínio) | `ssh -N -L 8090:127.0.0.1:8090 luzitec-vps` → http://localhost:8090 |
 | Banco inicial | `docker/banco/01_estrutura_e_config.sql` (estrutura da Frimelo sem dados pessoais), `02_empresa_principal.sql` (empresa + parâmetros 2026), `10_…`, `11_…`, `12_…` (migrations do Bem Vindo) |
 | Backup | `bemvindo-backup.timer` 02:30 → `/opt/bemvindo/backup/fazer-backup.sh`: dump conferido + config; 14 dias na VPS, 30 dias no Google Drive criptografado (`luzitec-backup-cripto:bemvindo/`). Restauração testada. Fonte e instruções: `docker/vps/` |
 | Deploy | `CLAUDE.md` §2.1 (backup → imagem → migrations → `IMAGEM_TAG` → `up -d --no-build` → conferir app e CRM). `create_zip.py` não é usado |
@@ -1112,7 +1112,7 @@ O sistema é multi-tenant com isolamento por `id_empresa`:
 | Status da competência em 6 etapas + perfis DP/contabilidade/diretor | Funcionalidade | Do documento de requisitos |
 | Relatórios: resumo por setor, prestação ao diretor, pagamentos, relatório para contabilidade (HE em horas, faltas/atestados em dias) | Funcionalidade | Fases A–C |
 | Retorno oficial da contabilidade e divergências | Funcionalidade | Depende da P26 |
-| DNS `bemvindo.luzitec.cnt.br` | Infra | Terceiro cria; depois conferir HTTPS automático do Caddy |
+| DNS `bemvindo.luzitec.cnt.br` | Infra | ✅ No ar desde 2026-11-26 (HTTPS Let's Encrypt OK) |
 | client_id próprio do Google Drive no rclone | Infra | O compartilhado será desativado em 2026 (afeta backup do Bem Vindo e do CRM) |
 | CEP da empresa; feriados municipais de Luziânia | Cadastro | Pendentes |
 | Remover transição v4.58.0 (`Authorization` legado + token no corpo do login) | Segurança | Herdado |
