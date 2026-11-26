@@ -73,7 +73,7 @@ class AuthSession
             "perfil" => $user['perfil'],
             "id_empresa" => $user['id_empresa'],
             "must_change_password" => $trocaSenhaObrigatoria,
-            "token" => $token
+            // Bem Vindo v1.5.1: token só no cookie HttpOnly (não volta mais no corpo)
         ];
     }
 

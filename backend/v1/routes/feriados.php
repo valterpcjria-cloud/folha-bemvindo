@@ -154,7 +154,8 @@ switch ($method) {
             exit;
         }
 
-        $stmt = $conn->prepare("DELETE FROM feriados WHERE id = ? AND (empresa_id = ? OR :is_super = 1)");
+        // Bem Vindo v1.5.1: antes misturava "?" com ":is_super" (HY093 → apagar feriado dava erro)
+        $stmt = $conn->prepare("DELETE FROM feriados WHERE id = ? AND (empresa_id = ? OR ? = 1)");
         $stmt->execute([$id, $empresaId, ($authUser['perfil'] === 'SUPERADMIN' ? 1 : 0)]);
 
         marcarRecalculoDsrAposFeriado($conn, $empresaId);

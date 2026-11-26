@@ -177,12 +177,12 @@ $router->add('empresa_atual', function () use ($conn, $authUser) {
 });
 
 // Rota: Dependentes
-$router->add('dependentes', function () use ($conn, $authUser) {
+$router->add('dependentes', function () use ($conn, $authUser, $route_parts) { // v1.5.1: + route_parts (o id nunca chegava)
     require_once 'routes/dependentes.php';
 });
 
 // Rota: Ferias
-$router->add('ferias', function () use ($conn, $authUser) {
+$router->add('ferias', function () use ($conn, $authUser, $route_parts) { // v1.5.1: + route_parts (o id nunca chegava)
     require_once 'routes/ferias.php';
 });
 

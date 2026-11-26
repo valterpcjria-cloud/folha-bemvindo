@@ -27,13 +27,11 @@ let companyContextId: number | null = getStorage('fq_company_context', null);
  * v4.58.0 (A3): a sessão viaja no cookie HttpOnly (o JS não tem acesso ao token).
  * Use em todo fetch direto à API, junto com `credentials: 'include'`.
  * - X-Requested-With: exigido pelo backend em POST/PUT/DELETE via cookie (proteção CSRF)
- * - Authorization: só para sessões abertas antes da v4.58.0 (transição; some no próximo login)
+ * Bem Vindo v1.5.1: sem header Authorization (fim da transição v4.58.0) — só o cookie.
  */
 export const authHeaders = (): Record<string, string> => {
-  const legacyToken = getStorage<any>(STORAGE_KEYS.USER, null)?.token;
   return {
     'X-Requested-With': 'XMLHttpRequest',
-    ...(legacyToken ? { 'Authorization': `Bearer ${legacyToken}` } : {}),
     ...(companyContextId ? { 'X-Company-Context': companyContextId.toString() } : {}),
   };
 };

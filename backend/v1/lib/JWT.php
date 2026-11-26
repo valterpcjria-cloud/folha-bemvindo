@@ -114,26 +114,6 @@ class JWT
         return $payload;
     }
 
-    /**
-     * Extrai token do header Authorization
-     */
-    public static function getTokenFromHeader(): ?string
-    {
-        $headers = getallheaders();
-        $authHeader = $headers['Authorization'] ?? $headers['authorization'] ?? '';
-
-        // Fallbacks para servidores que limpam o header Authorization (comum em Apache/HostGator)
-        if (empty($authHeader)) {
-            $authHeader = $_SERVER['HTTP_AUTHORIZATION'] ?? $_SERVER['REDIRECT_HTTP_AUTHORIZATION'] ?? '';
-        }
-
-        if (preg_match('/Bearer\s+(.+)/i', $authHeader, $matches)) {
-            return $matches[1];
-        }
-
-        return null;
-    }
-
     /** v4.58.0: token do cookie HttpOnly de sessão */
     public static function getTokenFromCookie(): ?string
     {
@@ -149,23 +129,13 @@ class JWT
 
     /**
      * Valida o token da requisição.
-     * v4.58.0: header Authorization válido tem prioridade (transição: telas antigas em cache);
-     * senão usa o cookie HttpOnly. Header inválido ("Bearer undefined") cai para o cookie.
+     * Bem Vindo v1.5.1: só o cookie HttpOnly de sessão (fim da transição v4.58.0 — o header
+     * Authorization e o token no corpo do login não são mais aceitos/enviados).
      * @return array|false Retorna o payload ou false se inválido
      */
     public static function validateRequest()
     {
         self::$tokenSource = null;
-
-        $headerToken = self::getTokenFromHeader();
-        if ($headerToken) {
-            $payload = self::decode($headerToken);
-            if ($payload) {
-                self::$tokenSource = 'header';
-                return $payload;
-            }
-        }
-
         $cookieToken = self::getTokenFromCookie();
         if ($cookieToken) {
             $payload = self::decode($cookieToken);
@@ -174,7 +144,6 @@ class JWT
                 return $payload;
             }
         }
-
         return false;
     }
 }

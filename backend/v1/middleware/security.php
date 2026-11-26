@@ -23,8 +23,8 @@ function setSecurityHeaders(): void
             header("Strict-Transport-Security: max-age=31536000; includeSubDomains");
         }
 
-        // CSP em modo Report-Only para não quebrar nada — avaliar violações nos logs do navegador antes de aplicar
-        header("Content-Security-Policy-Report-Only: default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; connect-src 'self'; frame-ancestors 'none';");
+        // Bem Vindo v1.5.1: a CSP agora é aplicada (enforced) pelo Apache em todas as respostas
+        // (docker/apache-bemvindo.conf). O Report-Only daqui foi removido.
 
         header_remove("X-Powered-By");
     }
