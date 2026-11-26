@@ -3,6 +3,28 @@
 Fork da Folha Frimelo (base v4.58.1) para o Supermercado Bem Vindo. A numeração recomeça em 1.0.0.
 O histórico da Frimelo continua abaixo, a partir de [4.58.1].
 
+## [1.5.1] - 2026-11-26
+
+Limpeza de segurança herdada da Frimelo. Nada muda na tela.
+
+### Segurança
+- Sessão **só pelo cookie HttpOnly**: o header `Authorization` não é mais aceito e o login/troca de senha não devolvem o token no corpo (fim da transição v4.58.0).
+- **Content-Security-Policy aplicada** pelo Apache na página do sistema (antes só Report-Only e só nas respostas da API): script/estilo/conexão só do próprio site, fontes do Google, sem iframe de fora nem plugin.
+- Dependentes e férias: todas as operações filtradas pela empresa do usuário; as rotas passam a receber o id da URL (antes nunca chegava); erro sem detalhes do banco.
+- Removidos 29 scripts `.php` soltos sem uso (diagnóstico e migrações antigas da Frimelo; já bloqueados por 403). Ficam `setup_db`, `fix_password` e `create_saas_admin`, usados por rotas protegidas (SUPERADMIN + SETUP_KEY).
+
+### Corrigido
+- Apagar feriado dava erro (SQL misturava `?` e `:is_super` — HY093).
+
+## [1.5.0] - 2026-11-26
+
+### Adicionado
+- **Relatórios → Bem Vindo → Indicadores** (Fase D), por setor e total, com cartões de destaque e exportação Excel/CSV/PDF:
+  - Quadro de pessoal: pessoas no mês, mulheres/homens, estagiários, admissões e desligamentos no mês, idade média, tempo médio de casa.
+  - Absenteísmo: faltas (dias), horas faltas, atestados (pessoas e dias) e taxa = (faltas + dias de atestado + horas faltas ÷ 7h20) ÷ (pessoas × dias úteis).
+  - Custo: bruto, FGTS, custo total, custo médio por pessoa e participação de cada setor.
+- Pendente: encargos patronais (contabilidade) e custo ÷ faturamento por setor (falta o dado do faturamento).
+
 ## [1.4.0] - 2026-11-26
 
 Competência em 6 etapas e perfis da contabilidade e do diretor (documento de requisitos).

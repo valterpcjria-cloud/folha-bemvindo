@@ -5,7 +5,7 @@ description: Conhecimento completo do sistema FOLHA BEM VINDO (fork da Folha Fri
 
 # FOLHA BEM VINDO — Skill do Sistema
 
-Folha de pagamento do **Supermercado Bem Vindo** (Luziânia-GO, ~70 colaboradores, 8 setores), operada por **Valter** (dono/operador/implantador, PT-BR, não-dev de rotina). Fork da Folha Frimelo v4.58.1; versão própria desde 1.0.0 (atual 1.4.0).
+Folha de pagamento do **Supermercado Bem Vindo** (Luziânia-GO, ~70 colaboradores, 8 setores), operada por **Valter** (dono/operador/implantador, PT-BR, não-dev de rotina). Fork da Folha Frimelo v4.58.1; versão própria desde 1.0.0 (atual 1.5.1).
 Produção: Docker na VPS Hostinger da Luzitec (`ssh luzitec-vps`, `/opt/bemvindo`, app em `127.0.0.1:8090`), **a mesma VPS do CRM da Luzitec em produção**. Domínio `bemvindo.luzitec.cnt.br` (aguardando DNS; até lá túnel SSH).
 A pasta `/home/valterpcjria/FOLHA FRIMELO` é OUTRO sistema em produção — **nunca alterar** (só leitura).
 

@@ -42,3 +42,4 @@ Tabela histórica completa: `SPEC.md` §16. Ao descobrir uma nova, registre aqui
 - **BV:** testar a restauração do backup, não só a criação.
 | **BV** Abrir o 2º mês daria 500 | `origem = 'COPIA_COMPETENCIA'` fora do ENUM; MariaDB com STRICT_TRANS_TABLES | ENUM ampliado na migration 14 (v1.4.0). Valor novo em coluna ENUM = migration |
 | **BV** Lançamento gravado em competência fechada | Só o `saveBulk` checava o status | `saveSingle` também recusa (409) desde v1.4.0 |
+| **BV** Rota respondia 200 vazio e nunca apagava | Closure em `index.php` sem `use ($route_parts)` | Toda closure cuja rota lê `$route_parts` precisa recebê-lo (v1.5.1) |

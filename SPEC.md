@@ -1,7 +1,7 @@
 # SPEC.md — Sistema FOLHA BEM VINDO (fork da Folha Frimelo)
 ## Spec-Driven Development — Documento de Especificação Completa
 
-> **Versão do Documento:** v1.4.0 | **Data:** 2026-11-26
+> **Versão do Documento:** v1.5.1 | **Data:** 2026-11-26
 > **Propósito:** Registro permanente do estado arquitetural, regras de negócio, fluxos, banco de dados e decisões técnicas do sistema. Nenhuma IA ou desenvolvedor deve modificar este sistema sem antes ler e compreender este SPEC.
 > **Como ler:** a §0 descreve o que é próprio do Bem Vindo. As §1–§20 descrevem a base herdada da Frimelo (v4.58.1), que continua valendo para o código salvo onde a §0 diz o contrário (infraestrutura, deploy, nomes de domínio e empresas da Frimelo são só histórico).
 
@@ -12,7 +12,7 @@
 ### 0.1 Identidade
 **Nome:** Folha Bem Vindo · **Cliente:** Supermercado Bem Vindo (CNPJ 41.403.240/0001-14, Luziânia-GO, ~70 colaboradores)
 **Origem:** fork da Folha Frimelo v4.58.1 em 2026-11-17 (histórico do git recomeçado; numeração recomeça em 1.0.0)
-**Versão atual:** 1.4.0 · **Repositório:** `valterpcjria-cloud/folha-bemvindo` (privado)
+**Versão atual:** 1.5.1 · **Repositório:** `valterpcjria-cloud/folha-bemvindo` (privado)
 **Premissa:** a contabilidade (mesmo escritório da Frimelo) é a fonte oficial dos cálculos; o sistema faz a prévia e organiza os lançamentos por setor.
 
 ### 0.2 Infraestrutura (substitui §2.3 e §13)
@@ -1060,6 +1060,8 @@ O sistema é multi-tenant com isolamento por `id_empresa`:
 
 | Versão | Data | Principais Mudanças |
 |--------|------|---------------------|
+| **BV 1.5.1** | 2026-11-26 | Sessão só por cookie; CSP aplicada no Apache; dependentes/férias isolados por empresa; feriado DELETE corrigido; 29 scripts soltos removidos |
+| **BV 1.5.0** | 2026-11-26 | Indicadores do mês por setor (quadro de pessoal, absenteísmo, custo) |
 | **BV 1.4.0** | 2026-11-26 | Competência em 6 etapas com histórico; perfis CONTABILIDADE e DIRETOR; trava de lançamento individual em comp fechada; abrir mês seguinte sem erro 500 |
 | **BV 1.3.0** | 2026-11-26 | Relatórios do DP (contabilidade, resumo por setor, pagamentos) em Excel/CSV/PDF, com o cálculo do grid (`calcularFolhaCompetencia`) |
 | **BV 1.2.0** | 2026-11-26 | Grat. de função 82 (%) no lugar da 88; HE 60% (37) com DSR; horas faltas (23); desconto VT 816 com teto; estagiário sem INSS/FGTS; faltas reduzem base do FGTS; cascata completa na edição |
@@ -1105,7 +1107,7 @@ O sistema é multi-tenant com isolamento por `id_empresa`:
 
 ---
 
-## 20. PENDÊNCIAS E BACKLOG (atualizado 2026-11-26 — Folha Bem Vindo v1.4.0)
+## 20. PENDÊNCIAS E BACKLOG (atualizado 2026-11-26 — Folha Bem Vindo v1.5.1)
 
 | Item | Tipo | Observação |
 |------|------|-----------|
@@ -1113,17 +1115,19 @@ O sistema é multi-tenant com isolamento por `id_empresa`:
 | Fechamento Expresso (`FechamentoService`) | Cálculo | Herdado; não deduz faltas nem trata estagiário — alinhar se for usado |
 | Fase B: adiantamentos (vale dia 21, convênios compras/farmácia), saldo a pagar, pagamento banco/Pix/loja + conferência | Funcionalidade | Depende da P24 (contracheque × controle interno) |
 | Status da competência em 6 etapas + perfis DP/contabilidade/diretor | Funcionalidade | ✅ v1.4.0 (`lib/EtapasCompetencia.php`, `constants/etapasCompetencia.ts`) |
-| Dependentes/férias: DELETE sem filtro de empresa; feriados DELETE mistura `?` e `:is_super` (HY093) | Segurança/bug | Herdado da Frimelo; entra na limpeza v1.5.1 |
+| Dependentes/férias: DELETE sem filtro de empresa; feriados DELETE mistura `?` e `:is_super` (HY093) | Segurança/bug | ✅ v1.5.1 |
+| Indicadores: encargos patronais e custo ÷ faturamento por setor | Funcionalidade | ✅ base em v1.5.0; faltam encargos (E10–E11) e o dado de faturamento |
+| `routes/aliquotas.php` não recebe `route_parts` (sub-rotas nunca funcionaram) | Bug | Sem uso no front; corrigir se for usado |
 | Relatórios: contabilidade, resumo por setor e pagamentos | Funcionalidade | ✅ v1.3.0 (`views/reports/`); validar com dados reais. Faltam prestação ao diretor e planejado × autorizado × pago (Fase B) |
 | Retorno oficial da contabilidade e divergências | Funcionalidade | Depende da P26 |
 | DNS `bemvindo.luzitec.cnt.br` | Infra | ✅ No ar desde 2026-11-26 (HTTPS Let's Encrypt OK) |
 | client_id próprio do Google Drive no rclone | Infra | O compartilhado será desativado em 2026 (afeta backup do Bem Vindo e do CRM) |
 | CEP da empresa; feriados municipais de Luziânia | Cadastro | Pendentes |
-| Remover transição v4.58.0 (`Authorization` legado + token no corpo do login) | Segurança | Herdado |
-| Apagar scripts `.php` soltos de `backend/v1/` | Segurança/limpeza | Já bloqueados (403); `setup_db.php` e `fix_password.php` são usados por rotas — revisar |
-| CSP de Report-Only para enforced | Segurança | Herdado |
+| Remover transição v4.58.0 (`Authorization` legado + token no corpo do login) | Segurança | ✅ v1.5.1 |
+| Apagar scripts `.php` soltos de `backend/v1/` | Segurança/limpeza | ✅ v1.5.1 (ficam `setup_db`, `fix_password`, `create_saas_admin`) |
+| CSP de Report-Only para enforced | Segurança | ✅ v1.5.1 (Apache, `docker/apache-bemvindo.conf`) |
 | Erro TS pré-existente em `FormulasView.tsx` | Tipagem | Não quebra o build |
 
 ---
 
-*Este documento foi atualizado em 2026-11-26. Versão atual: FOLHA BEM VINDO v1.4.0 (base Frimelo v4.58.1).*
+*Este documento foi atualizado em 2026-11-26. Versão atual: FOLHA BEM VINDO v1.5.1 (base Frimelo v4.58.1).*

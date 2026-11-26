@@ -12,7 +12,7 @@ Este arquivo define as **regras globais de arquitetura, comandos e as melhores "
 Sempre que você (AI) for analisar, criar features ou debugar código neste projeto, **siga estritamente as seções abaixo.**
 
 ## ⚠️ 0. O QUE É ESTE PROJETO (ler primeiro)
-- **Fork da Folha Frimelo (base v4.58.1)**, criado em 2026-11-17 para o **Supermercado Bem Vindo** (Luziânia-GO, ~70 colaboradores, 8 setores). Versão própria recomeça em **1.0.0** (atual: **v1.4.0**, 2026-11-26).
+- **Fork da Folha Frimelo (base v4.58.1)**, criado em 2026-11-17 para o **Supermercado Bem Vindo** (Luziânia-GO, ~70 colaboradores, 8 setores). Versão própria recomeça em **1.0.0** (atual: **v1.5.1**, 2026-11-26).
 - **NUNCA alterar `/home/valterpcjria/FOLHA FRIMELO`** (outro sistema, em produção na Hostgator). Lá é só leitura. Correção que valha para os dois: avisar o Valter, não aplicar na Frimelo.
 - **Produção:** VPS Hostinger da Luzitec (`ssh luzitec-vps`), em Docker, em `/opt/bemvindo` (app em `127.0.0.1:8090` + MariaDB 11.4 próprio). Endereço `https://bemvindo.luzitec.cnt.br` (DNS e HTTPS Let's Encrypt OK desde 2026-11-26). Plano B: túnel `ssh -N -L 8090:127.0.0.1:8090 luzitec-vps` → http://localhost:8090.
 - **A mesma VPS roda o CRM da Luzitec em produção.** Nada pode afetá-lo: Caddy compartilhado (`/opt/luzitec/proxy/Caddyfile`), cron/timers e backup do CRM não são tocados. Conferir `https://crm.luzitec.cnt.br/` → 307 depois de qualquer mexida.
@@ -57,7 +57,7 @@ Sempre atue invocando os conhecimentos das seguintes *skills* de engenharia:
 - **Commits:** Conventional Commits em PT (`feat|fix|docs|chore(escopo): descricao`), código e docs em commits separados, rodapé de co-autoria.
 - `create_zip.py` (zip Hostgator) **não é usado** no Bem Vindo.
 
-### 2.1 Fluxo de versão (Bem Vindo — validado em v1.0.0 → v1.4.0)
+### 2.1 Fluxo de versão (Bem Vindo — validado em v1.0.0 → v1.5.1)
 1. **Perguntar a versão** ao Valter antes de bumpar.
 2. Implementar → testar no Docker local com dados fictícios → commit do código.
 3. `docker build -q -f docker/Dockerfile -t folha-bemvindo:X.Y.Z .` → conferir na imagem: sem `.env`, versão no bundle, 4 extensões (`calendar gd bcmath pdo_mysql`), `php -l` dos PHP alterados.
@@ -200,7 +200,7 @@ Se precisar adicionar nova rubrica do tipo "valor fixo" (como Gratificação):
 
 ---
 
-## 📌 5B. REGRAS DO BEM VINDO (v1.0.0 → v1.4.0)
+## 📌 5B. REGRAS DO BEM VINDO (v1.0.0 → v1.5.1)
 
 ### Setores e hierarquia (v1.0.0)
 - Tabela `setores` (8: Administrativo, Açougue, Padaria, FLV, PGC, Frente de Loja, Vendas Online/Escolas, Entregas); `cargos` com `id_setor` + `ordem_hierarquia` (1 = topo), único por (empresa, setor, nome). Setor/cargo **desativa**, não exclui. Tela `/setores` (`SetoresView` + `components/setores/`).
@@ -232,6 +232,11 @@ Se precisar adicionar nova rubrica do tipo "valor fixo" (como Gratificação):
 - Perfis de consulta = `PERFIS_SOMENTE_LEITURA` (LEITURA, CONTABILIDADE, DIRETOR): GET liberado, gravação via `requireRole(['ADMIN','RH'])`. Rota nova de gravação DEVE ter `requireRole`. Perfil RH = DP.
 - `saveSingle` lança `CompetenciaTravadaException` (409) fora da etapa ABERTA.
 
+### Indicadores e segurança (v1.5.0 / v1.5.1)
+- Indicadores: `views/reports/montarIndicadores.ts` (usa `folha.todosFuncionarios` e `diasUteis`); custo só de quem está na folha do mês (desligado sai em comp aberta).
+- **Sessão só por cookie** (`JWT::validateRequest` não lê mais `Authorization`; `respostaSessao` sem token). **CSP enforced no Apache** (`docker/apache-bemvindo.conf`): recurso externo novo (CDN, API de fora) precisa entrar na política, senão o navegador bloqueia.
+- Closure de rota em `index.php` que use `$route_parts` precisa de `use (..., $route_parts)` (dependentes/férias ficaram anos sem receber o id). Rota de dados de funcionário filtra por `id_empresa` (JOIN funcionarios).
+
 ### Infra (v1.0.0 → v1.1.0)
 - Imagem `php:8.3-apache` com `calendar`, `gd`, `bcmath`, `pdo_mysql` (sem `calendar` o DSR dá 500).
 - Backup diário 02:30 (`bemvindo-backup.timer`): 14 dias em `/opt/bemvindo/backup/copias` + 30 dias no Drive (`luzitec-backup-cripto:bemvindo/`). Ver `docker/vps/LEIA-ME.md`. O client_id compartilhado do rclone será desativado em 2026 → envio ao Drive (Bem Vindo e CRM) vai falhar até criar client_id próprio.
@@ -243,7 +248,7 @@ Se precisar adicionar nova rubrica do tipo "valor fixo" (como Gratificação):
 - Fase B (controles internos): adiantamentos (vale dia 21, convênios), saldo a pagar, pagamento banco/Pix/loja e conferência; status de competência em 6 etapas; perfis DP/contabilidade/diretor.
 - Relatórios da v1.3.0: validar com dados reais. Faltam prestação ao diretor (Fase B) e indicadores (Fase D).
 - CEP da empresa. Feriados municipais de Luziânia.
-- Herdadas da Frimelo (limpeza v1.5.1): dependentes/férias DELETE sem filtro de empresa, feriados DELETE com HY093, remover transição v4.58.0 (`Authorization` legado), scripts `.php` soltos, CSP enforced, erro TS em `FormulasView.tsx`.
+- Herdadas da Frimelo: erro TS em `FormulasView.tsx`; `aliquotas.php` sem `route_parts` (sem uso). Limpeza de segurança concluída na v1.5.1.
 
 ---
-*Este CLAUDE.md foi gerado nativamente pelo Antigravity em colaboração com o Usuário e adaptado para a Folha Bem Vindo. Última atualização: v1.4.0 (2026-11-26)*
+*Este CLAUDE.md foi gerado nativamente pelo Antigravity em colaboração com o Usuário e adaptado para a Folha Bem Vindo. Última atualização: v1.5.1 (2026-11-26)*

@@ -1,6 +1,6 @@
 # Versão, Imagem Docker, Deploy na VPS, Backup, Push (Folha Bem Vindo)
 
-Validado em v1.0.0, v1.1.0 (2026-11-18), v1.2.0, v1.3.0 e v1.4.0 (2026-11-26). O zip/Hostgator da Frimelo (`create_zip.py`) **não é usado**.
+Validado em v1.0.0, v1.1.0 (2026-11-18), v1.2.0 → v1.5.1 (2026-11-26). O zip/Hostgator da Frimelo (`create_zip.py`) **não é usado**.
 
 ## Sequência
 1. **Confirme o número da versão com o Valter** (patch = correção; minor = funcionalidade).

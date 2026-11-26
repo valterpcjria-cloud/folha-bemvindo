@@ -1,7 +1,7 @@
 # PRD — Product Requirements Document
 ## Sistema FOLHA BEM VINDO — Folha de Pagamento do Supermercado Bem Vindo (fork da Folha Frimelo)
 
-> **Versão:** 3.1 | **Data:** 2026-11-26 | **Status:** Em implantação — v1.4.0 no ar em https://bemvindo.luzitec.cnt.br (aguardando a 2ª rodada de respostas; ainda sem uso real)
+> **Versão:** 3.1 | **Data:** 2026-11-26 | **Status:** Em implantação — v1.5.1 no ar em https://bemvindo.luzitec.cnt.br (aguardando a 2ª rodada de respostas; ainda sem uso real)
 > **Proprietário do Produto:** Valter (operador/implantador) · **Cliente:** Supermercado Bem Vindo (Luziânia-GO)
 > **Responsável Técnico:** Claude Code / Antigravity
 > **Como ler:** a §0 é o produto Bem Vindo. As §1–§13 descrevem a base herdada da Frimelo, que o Bem Vindo aproveita ("não fugir da base do sistema existente; acrescentar o que eles pediram").
@@ -35,7 +35,7 @@
 | A.5 | Rubricas pendentes (quebra de caixa, produtividade, auxílios, suspensão, salário-família...) + relatório para contabilidade | ⏳ 2ª rodada |
 | B | Adiantamentos (vale dia 21, convênios), saldo, pagamentos banco/Pix/loja, prestação ao diretor, status em 6 etapas, perfis DP/contabilidade/diretor | ⏳ depende da P24 |
 | C | Retorno oficial da contabilidade e conciliação; 13º/férias/rescisão | ⏳ depende de P26/P29 |
-| D | Indicadores (quadro H/M, absenteísmo, custo por setor, custo ÷ receita) | 🔜 |
+| D | Indicadores (quadro H/M, absenteísmo, custo por setor, custo ÷ receita) | ✅ v1.5.0 (falta custo ÷ receita e encargos) |
 
 ### 0.4 Decisões já tomadas
 - Mesmo escritório de contabilidade da Frimelo → reaproveitar códigos e layout de exportação onde o escritório confirmar.

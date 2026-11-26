@@ -38,3 +38,8 @@ Status da auditoria: Deploys 1–3 + hotfix concluídos (v4.51.0 → v4.58.1). P
 ## Perfis e etapas (Bem Vindo v1.4.0)
 - Perfis: SUPERADMIN, ADMIN, RH (= DP), CONTABILIDADE, DIRETOR, LEITURA. Os três últimos só consultam (`PERFIS_SOMENTE_LEITURA`); cada um só mexe na sua etapa da competência via `POST /competencias/{id}/etapa`.
 - Toda rota que grava precisa de `requireRole($authUser, ['ADMIN','RH'])` (antes da v1.4.0 dependentes/férias não tinham). Dados bancários do funcionário só para SUPERADMIN/ADMIN/RH.
+
+## v1.5.1
+- Sessão só pelo cookie `bemvindo_session` (header `Authorization` não é aceito; login não devolve token no corpo).
+- CSP aplicada no Apache (`docker/apache-bemvindo.conf`). Ao adicionar recurso externo, incluir a origem na política e testar no navegador (console sem "Refused to").
+- Só restam 3 `.php` fora de `index.php`/`config.php`: `setup_db`, `fix_password`, `create_saas_admin` (rotas SUPERADMIN + SETUP_KEY).
