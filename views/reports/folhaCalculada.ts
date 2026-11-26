@@ -18,6 +18,8 @@ export interface TotaisFuncionario {
 export interface FolhaCalculada {
   competencia: Competencia;
   funcionarios: Funcionario[];          // só quem tem movimento ou atestado na competência
+  todosFuncionarios: Funcionario[];     // v1.5.0: cadastro inteiro (quadro de pessoal dos indicadores)
+  diasUteis: number;                    // v1.5.0: dias úteis da competência (absenteísmo)
   eventos: EventoFolha[];               // ativos, na ordem de exportação
   lancamentos: MapaLancamentos;
   totais: Record<number, TotaisFuncionario>;
@@ -79,6 +81,8 @@ export async function carregarFolhaCalculada(competencia: Competencia): Promise<
   return {
     competencia,
     funcionarios,
+    todosFuncionarios: funcs,
+    diasUteis: diasCal.dias_uteis,
     eventos,
     lancamentos: calc.lancamentos,
     totais,

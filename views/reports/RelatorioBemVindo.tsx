@@ -9,20 +9,23 @@ import { Competencia } from '../../types';
 import { nomeEtapa } from '../../constants/etapasCompetencia';
 import { carregarFolhaCalculada, FolhaCalculada, rotuloCompetencia } from './folhaCalculada';
 import { montarRelatorioContabilidade, montarResumoPorSetor, montarRelacaoPagamentos, TabelaRelatorio } from './montarRelatorios';
+import { montarIndicadores } from './montarIndicadores';
 import { exportarRelatorio, formatarCelula, FormatoExportacao } from './exportarRelatorio';
 
-export type TipoRelatorioBV = 'BV_CONTABILIDADE' | 'BV_RESUMO_SETOR' | 'BV_PAGAMENTOS';
+export type TipoRelatorioBV = 'BV_CONTABILIDADE' | 'BV_RESUMO_SETOR' | 'BV_PAGAMENTOS' | 'BV_INDICADORES';
 
 export const TITULOS_BV: Record<TipoRelatorioBV, string> = {
   BV_CONTABILIDADE: 'Relatório para a Contabilidade',
   BV_RESUMO_SETOR: 'Resumo por Setor',
   BV_PAGAMENTOS: 'Relação de Pagamentos',
+  BV_INDICADORES: 'Indicadores do Mês',
 };
 
 const ARQUIVOS: Record<TipoRelatorioBV, string> = {
   BV_CONTABILIDADE: 'Contabilidade',
   BV_RESUMO_SETOR: 'ResumoPorSetor',
   BV_PAGAMENTOS: 'Pagamentos',
+  BV_INDICADORES: 'Indicadores',
 };
 
 const ESTILO_LINHA = {
@@ -70,6 +73,7 @@ const RelatorioBemVindo: React.FC<Props> = ({ tipo, competencias }) => {
     if (!folha) return null;
     if (tipo === 'BV_CONTABILIDADE') return montarRelatorioContabilidade(folha, incluirCalculadas);
     if (tipo === 'BV_RESUMO_SETOR') return montarResumoPorSetor(folha);
+    if (tipo === 'BV_INDICADORES') return montarIndicadores(folha);
     return montarRelacaoPagamentos(folha);
   }, [folha, tipo, incluirCalculadas]);
 
@@ -162,7 +166,17 @@ const RelatorioBemVindo: React.FC<Props> = ({ tipo, competencias }) => {
         <div className="flex items-center justify-center p-16 text-slate-400 gap-3">
           <Loader2 className="animate-spin" /> Calculando a competência…
         </div>
-      ) : tabela && (
+      ) : tabela && (<>
+        {tabela.destaques && (
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+            {tabela.destaques.map(d => (
+              <div key={d.rotulo} className="bg-white rounded-2xl border border-slate-200 shadow-sm p-5">
+                <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{d.rotulo}</p>
+                <p className="text-2xl font-black text-slate-800 mt-2">{d.valor}</p>
+              </div>
+            ))}
+          </div>
+        )}
         <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
           <div className="overflow-auto max-h-[70vh]">
             <table className="min-w-full text-xs">
@@ -198,7 +212,7 @@ const RelatorioBemVindo: React.FC<Props> = ({ tipo, competencias }) => {
             <Info size={14} className="shrink-0 mt-0.5" /> {tabela.rodape}
           </p>
         </div>
-      )}
+      </>)}
     </div>
   );
 };

@@ -309,6 +309,7 @@ const ReportsView: React.FC = () => {
             <SidebarItem type="BV_CONTABILIDADE" label="Para a Contabilidade" icon={ListChecks} />
             <SidebarItem type="BV_RESUMO_SETOR" label="Resumo por Setor" icon={LayoutGrid} />
             <SidebarItem type="BV_PAGAMENTOS" label="Pagamentos" icon={Wallet} />
+            <SidebarItem type="BV_INDICADORES" label="Indicadores" icon={TrendingUp} />
           </div>
           <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-2 pl-1">Geral</p>
           <div className="space-y-2">

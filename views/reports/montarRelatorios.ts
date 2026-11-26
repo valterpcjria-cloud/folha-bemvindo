@@ -14,6 +14,7 @@ export interface TabelaRelatorio {
   colunas: ColunaRelatorio[];
   linhas: LinhaRelatorio[];
   rodape: string;
+  destaques?: { rotulo: string; valor: string }[]; // v1.5.0: cartões no alto da tela (indicadores)
 }
 
 export const formatarCpf = (cpf?: string | null): string => {
