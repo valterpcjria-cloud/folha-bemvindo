@@ -16,8 +16,10 @@
 
 $method = $_SERVER['REQUEST_METHOD'];
 
-// Apenas ADMIN, SUPERADMIN e RH gerenciam atestados
-if ($authUser['perfil'] !== 'ADMIN' && $authUser['perfil'] !== 'SUPERADMIN' && $authUser['perfil'] !== 'RH') {
+// Apenas ADMIN, SUPERADMIN e RH gerenciam atestados.
+// Bem Vindo v1.4.0: a consulta (GET) é liberada para os perfis de leitura (contabilidade, diretor),
+// senão a Assiduidade e o relatório da contabilidade saem diferentes do que o DP vê.
+if ($method !== 'GET' && $authUser['perfil'] !== 'ADMIN' && $authUser['perfil'] !== 'SUPERADMIN' && $authUser['perfil'] !== 'RH') {
     http_response_code(403);
     echo json_encode(["message" => "Acesso negado."]);
     exit;

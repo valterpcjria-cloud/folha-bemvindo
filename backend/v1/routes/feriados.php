@@ -9,8 +9,8 @@
 $method = $_SERVER['REQUEST_METHOD'];
 $id = $route_parts[1] ?? null;
 
-// Só admins, superadmins e RH podem gerenciar feriados
-if ($authUser['perfil'] !== 'ADMIN' && $authUser['perfil'] !== 'SUPERADMIN' && $authUser['perfil'] !== 'RH') {
+// Só admins, superadmins e RH podem gerenciar feriados (Bem Vindo v1.4.0: consulta liberada a todos os perfis)
+if ($method !== 'GET' && $authUser['perfil'] !== 'ADMIN' && $authUser['perfil'] !== 'SUPERADMIN' && $authUser['perfil'] !== 'RH') {
     http_response_code(403);
     echo json_encode(["message" => "Acesso negado. Apenas administradores podem gerenciar feriados."]);
     exit;

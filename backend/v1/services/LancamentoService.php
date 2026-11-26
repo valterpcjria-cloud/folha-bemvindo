@@ -1,5 +1,10 @@
 <?php
+
 declare(strict_types=1);
+
+/** Bem Vindo v1.4.0: escrita em competência travada (fora da etapa ABERTA) → 409. */
+class CompetenciaTravadaException extends Exception {}
+
 
 /**
  * LancamentoService
@@ -117,6 +122,11 @@ class LancamentoService
         $comp_id = (int)($data['competencia_id'] ?? 0);
         if ($comp_id <= 0) {
             $comp_id = $this->getActiveCompetenciaId($empresaId);
+        }
+        // Bem Vindo v1.4.0: competência fora da etapa ABERTA é imutável também no salvar individual
+        // (antes só o salvar em lote recusava — herdado da Frimelo).
+        if ($comp_id <= 0 || !$this->isCompetenciaAberta($comp_id, $empresaId)) {
+            throw new CompetenciaTravadaException('Competência travada: só a etapa ABERTA aceita lançamentos.');
         }
 
         $salary     = $this->getSalaryForEmployee((int)$data['funcionario_id'], $comp_id, $empresaId);

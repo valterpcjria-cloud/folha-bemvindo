@@ -41,6 +41,10 @@ elseif ($method == 'POST') {
             }
         }
     }
+    catch (CompetenciaTravadaException $e) {
+        http_response_code(409);
+        echo json_encode(["error" => $e->getMessage()]);
+    }
     catch (Exception $e) {
         file_put_contents(dirname(__DIR__) . '/sys_logs/lancamentos_error.log', date('Y-m-d H:i:s') . " - EXCEPTION: " . $e->getMessage() . "\n", FILE_APPEND);
         http_response_code(500);

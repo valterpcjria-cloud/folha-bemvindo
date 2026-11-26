@@ -4,6 +4,11 @@
 $method = $_SERVER['REQUEST_METHOD'];
 $id = isset($route_parts[1]) ? $route_parts[1] : null;
 
+// Bem Vindo v1.4.0: só ADMIN/RH gravam (perfis de consulta — leitura, contabilidade, diretor — só leem)
+if ($method !== 'GET') {
+    requireRole($authUser, ['ADMIN', 'RH']);
+}
+
 // GET /ferias/funcionario/{id}
 if ($method == 'GET' && isset($route_parts[1]) && $route_parts[1] === 'funcionario' && isset($route_parts[2])) {
     $funcId = $route_parts[2];
