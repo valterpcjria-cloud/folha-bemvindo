@@ -7,6 +7,7 @@ Banco do Bem Vindo: **MariaDB 11.4 em container** (`bemvindo-db`, sem porta expo
 - `funcionarios` — cadastro + rubricas do cadastro (`salario_base`, `gratificacao`, `*_perc`, ...), `status` (DESLIGADO).
 - `competencias` — `status` ABERTA/FECHADA.
 - `competencia_atestados` — atestado por funcionário/competência (isolada; não afeta export/import); `dias` desde BV v1.1.0.
+- BV v1.2.0 (`13_bv_rubricas_v120.sql`): `funcionarios.gratificacao_funcao_perc`, `vt_desconto_perc`, `vt_custo_mensal`; eventos 82/37/23/816; 88 `ativo = 0`; 37 em `dsr_he_config_eventos`. `eventos_folha` é global (sem `id_empresa`), unique em `codigo_evento`.
 - **Bem Vindo:** `setores`; `cargos` (`id_setor`, `ordem_hierarquia`); `funcionarios` + `id_setor`, `id_cargo`, `data_nascimento`, `sexo`, `escolaridade`, pagamento (`modalidade_pagamento`, `banco`, `agencia`, `conta`, `tipo_conta`, `chave_pix`). `departamento` = código da exportação contábil, não é setor.
 - `usuarios` (+ `must_change_password`), `jwt_blacklist` (jti revogados), `logs_auditoria` (`registrarLog`), `feriados` (`ativo`), `eventos_folha`, `parametros_sistema`, `empresas`.
 

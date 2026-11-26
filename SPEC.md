@@ -1,7 +1,7 @@
 # SPEC.md — Sistema FOLHA BEM VINDO (fork da Folha Frimelo)
 ## Spec-Driven Development — Documento de Especificação Completa
 
-> **Versão do Documento:** v1.1.0 | **Data:** 2026-11-18
+> **Versão do Documento:** v1.2.0 | **Data:** 2026-11-26
 > **Propósito:** Registro permanente do estado arquitetural, regras de negócio, fluxos, banco de dados e decisões técnicas do sistema. Nenhuma IA ou desenvolvedor deve modificar este sistema sem antes ler e compreender este SPEC.
 > **Como ler:** a §0 descreve o que é próprio do Bem Vindo. As §1–§20 descrevem a base herdada da Frimelo (v4.58.1), que continua valendo para o código salvo onde a §0 diz o contrário (infraestrutura, deploy, nomes de domínio e empresas da Frimelo são só histórico).
 
@@ -12,7 +12,7 @@
 ### 0.1 Identidade
 **Nome:** Folha Bem Vindo · **Cliente:** Supermercado Bem Vindo (CNPJ 41.403.240/0001-14, Luziânia-GO, ~70 colaboradores)
 **Origem:** fork da Folha Frimelo v4.58.1 em 2026-11-17 (histórico do git recomeçado; numeração recomeça em 1.0.0)
-**Versão atual:** 1.1.0 · **Repositório:** `valterpcjria-cloud/folha-bemvindo` (privado)
+**Versão atual:** 1.2.0 · **Repositório:** `valterpcjria-cloud/folha-bemvindo` (privado)
 **Premissa:** a contabilidade (mesmo escritório da Frimelo) é a fonte oficial dos cálculos; o sistema faz a prévia e organiza os lançamentos por setor.
 
 ### 0.2 Infraestrutura (substitui §2.3 e §13)
@@ -35,6 +35,7 @@
 | `10_bv_setores_cargos_cadastro.sql` (v1.0.0) | Tabela `setores` (id_empresa, nome, ordem, ativo; 8 setores); `cargos` + `id_empresa`, `id_setor`, `ordem_hierarquia` (unique empresa+setor+nome); `funcionarios` + `id_setor`, `id_cargo`, `data_nascimento`, `sexo` (F/M/O), `escolaridade`, `modalidade_pagamento` (BANCO/PIX/LOJA), `banco`, `agencia`, `conta`, `tipo_conta`, `chave_pix` |
 | `11_bv_atestado_dias.sql` (v1.1.0) | `competencia_atestados.dias` TINYINT NULL |
 | `12_bv_padrao_insalubridade_zero.sql` (v1.1.0) | DEFAULT de `funcionarios.insalubridade_perc` e `assiduidade_perc` = 0.00 |
+| `13_bv_rubricas_v120.sql` (v1.2.0) | `funcionarios` + `gratificacao_funcao_perc`, `vt_desconto_perc`, `vt_custo_mensal`; `eventos_folha` + 82, 37, 23, 816; 88 `ativo = 0`; `dsr_he_config_eventos` + 37 |
 
 Todas idempotentes e aditivas. PDO com `EMULATE_PREPARES=false`: parâmetro nomeado não pode se repetir na mesma query (HY093).
 
@@ -43,7 +44,7 @@ Todas idempotentes e aditivas. PDO com `EMULATE_PREPARES=false`: parâmetro nome
 |------|--------|--------|-----------|
 | `setores` | GET / POST / PUT `{id}` / POST `reordenar` | leitura: todos; escrita: ADMIN/RH | Setores da empresa (sem DELETE: desativar) |
 | `cargos` | GET / POST / PUT / DELETE | escrita: ADMIN/RH | Reescrita: filtra por empresa, hierarquia por setor; renomear atualiza `funcionarios.cargo` |
-| `funcionarios` | GET / POST / PUT | — | + campos do Bem Vindo (gravados só se presentes); pagamento só ADMIN/RH/SUPERADMIN; padrão de insalubridade/assiduidade 0 |
+| `funcionarios` | GET / POST / PUT | — | + campos do Bem Vindo (gravados só se presentes); pagamento só ADMIN/RH/SUPERADMIN; padrão de insalubridade/assiduidade 0; v1.2.0: `gratificacao_funcao_perc` (0–100), `vt_desconto_perc` (0–6), `vt_custo_mensal` (≥ 0) → 400 fora da faixa |
 | `empresa_atual` | GET | autenticado | Razão social, CNPJ, cidade/UF da empresa do usuário (cabeçalho do contracheque) |
 | `atestados` | GET | ADMIN/RH | `{data:[funcionario_id], dias:{funcionario_id: dias\|null}}` |
 | `atestados` | POST | ADMIN/RH | `{funcionario_id, competencia_id, tem_atestado, dias?}`; `dias` 1..31 (ausente = mantém; vazio/0 = NULL); 404 se não for da empresa; 409 se competência FECHADA |
@@ -58,8 +59,21 @@ Todas idempotentes e aditivas. PDO com `EMULATE_PREPARES=false`: parâmetro nome
 - **Padrões**: funcionário novo com insalubridade 0% e assiduidade 0% (Frimelo 20%/11%).
 - **Marca**: "Folha Bem Vindo"; cookie `bemvindo_session`; contracheque com dados da empresa via `empresa_atual`; PDFs leem `nome_cidade`.
 
-### 0.6 Regras ainda NÃO definidas (aguardando a contabilidade, perguntas P1–P30)
-HE 60% (cód. 37) e base/divisor (P1, P15), adicional noturno (P16), incidências INSS/FGTS/IRRF (P1–P8), códigos (P9–P11), insalubridade por função (P17), faltas/DSR/suspensão/atestados longos (P18), salário-família (P19), GPS patronal e provisões (P21–P23), o que é contracheque × controle interno (P24), layout do arquivo e retorno oficial (P25–P26), data de corte (P27), consignados múltiplos (P28), 13º/férias/rescisão (P29). **Não implementar essas regras por suposição.**
+### 0.6 Regras de cálculo do Bem Vindo (v1.2.0, respostas P1–P30 de 25/11/2026)
+**Códigos = os do Questor.** Rubrica que já existia na Frimelo mantém o código (INSS 35, IRRF 1920, FGTS 1900...); rubrica só do Bem Vindo usa o código da lista deles.
+
+| Cód | Rubrica | Unidade | Fórmula |
+|---|---|---|---|
+| 82 | Gratificação de função | % (cadastro, travada) | salário (33) × % ÷ 100. Substitui a 88 (desativada) |
+| 37 | HE 60% | HORA | (33 + 82 + 62) ÷ 220 × 1,6 × horas; entra no DSR 59 |
+| 49 | HE 100% | HORA | (33 + 82 + 62) ÷ 220 × 2 × horas |
+| 23 | Horas faltas | HORA, desconto | 33 ÷ 220 × horas; não desconta DSR; reduz bases INSS/IRRF/FGTS |
+| 816 | Desconto VT | % (cadastro, travada) | (33 − 71 − 23) × % ÷ 100, % ≤ 6, teto = `vt_custo_mensal` (0 = sem teto); não mexe nas bases |
+| — | Estagiário (`tipo_contrato = ESTAGIO`) | — | INSS 0 e FGTS 0; IRRF normal |
+
+Faltas 71 + 23 reduzem as bases de INSS, IRRF **e FGTS**. Cálculo na tela: `hooks/payrollBemVindo.ts` + `recalcularCascataCompleta()`; ao salvar: `LancamentoService::calculateEventValue` (82, 37, 23). Sem adicional noturno (P16: a empresa não tem).
+
+**Ainda pendente (2ª rodada de perguntas, 26/11/2026):** verbas da base da HE e divisor (E6), insalubridade por função/grau/base (E7), DSR em faltas/suspensão/afastamentos (E8), códigos de DSR por falta, salário-família, atestado, suspensão, convênio, 13º/férias/rescisão (E1), auxílios (E3–E4), bônus aniversário (E2), CCT (E5), encargos do Simples e provisões (E10–E11), data de corte, matrículas, retorno e 13º/férias (E12–E15); ao Bem Vindo: B1–B12. **Não implementar essas regras por suposição.**
 
 ---
 
@@ -992,6 +1006,7 @@ O `.htaccess` em `public/` é copiado para `dist/` pelo Vite durante o build.
 | **BV** Tela caía no cálculo reserva de feriados | `:uf` repetido na mesma query → HY093 com `EMULATE_PREPARES=false` | Nomes distintos (`:uf2`); varrer parâmetros repetidos ao mexer em SQL (v1.0.0). A Frimelo tem o mesmo bug (avisado, não mexido) |
 | **BV** PDF com "- -GO" | Código lia `cidade`, coluna é `nome_cidade` | `$e['cidade'] ?? $e['nome_cidade']` (v1.0.0) |
 | **BV** Funcionário novo com insalubridade indevida | Padrão herdado da Frimelo (20% / 11%) | Padrão 0% em formulário, API, cálculo e DEFAULT (v1.1.0) |
+| **BV** Proposta de trocar código de rubrica pela resposta do escritório | Escritório escreveu "INSS 1950"; o código do Questor é o mesmo da outra folha | Código existente nunca muda (importação no Questor dá erro); só rubrica nova usa código novo (v1.2.0) |
 | **BV** Versão anterior sumiu da VPS para rollback | Cron do CRM `docker image prune -af --filter until=24h` | Guardar a imagem anterior no PC e reenviar; não mexer no cron do CRM |
 | **BV** localhost:8090 "conexão recusada" | Túnel SSH não estava aberto | `ssh -N -L 8090:127.0.0.1:8090 luzitec-vps` e deixar o terminal aberto |
 
@@ -1044,6 +1059,7 @@ O sistema é multi-tenant com isolamento por `id_empresa`:
 
 | Versão | Data | Principais Mudanças |
 |--------|------|---------------------|
+| **BV 1.2.0** | 2026-11-26 | Grat. de função 82 (%) no lugar da 88; HE 60% (37) com DSR; horas faltas (23); desconto VT 816 com teto; estagiário sem INSS/FGTS; faltas reduzem base do FGTS; cascata completa na edição |
 | **BV 1.1.0** | 2026-11-18 | Etiquetas nível/aniversário/admissão na matriz; atestado em dias; insalubridade/assiduidade padrão 0%; `POST /atestados` valida empresa e recusa competência fechada; backup diário do banco na VPS |
 | **BV 1.0.0** | 2026-11-18 | Fork Bem Vindo: Docker na VPS, setores/cargos/hierarquia, cadastro ampliado, matriz por setor, marca, senha temporária em empresa nova; fixes: extensões PHP da imagem, HY093 no DsrService, `nome_cidade` no PDF |
 | v4.50.3 | 2026-04-03 | ADMIN passa a acessar múltiplas empresas via `X-Company-Context` (antes era só SUPERADMIN) |
@@ -1086,11 +1102,12 @@ O sistema é multi-tenant com isolamento por `id_empresa`:
 
 ---
 
-## 20. PENDÊNCIAS E BACKLOG (atualizado 2026-11-18 — Folha Bem Vindo v1.1.0)
+## 20. PENDÊNCIAS E BACKLOG (atualizado 2026-11-26 — Folha Bem Vindo v1.2.0)
 
 | Item | Tipo | Observação |
 |------|------|-----------|
-| Rubricas e regras do Bem Vindo (§0.6) | Cálculo | Aguardando respostas da contabilidade (P1–P30), que estão sendo providenciadas |
+| Rubricas e regras ainda pendentes (§0.6) | Cálculo | 2ª rodada enviada em 26/11/2026 (escritório E1–E15, Bem Vindo B1–B12) |
+| Fechamento Expresso (`FechamentoService`) | Cálculo | Herdado; não deduz faltas nem trata estagiário — alinhar se for usado |
 | Fase B: adiantamentos (vale dia 21, convênios compras/farmácia), saldo a pagar, pagamento banco/Pix/loja + conferência | Funcionalidade | Depende da P24 (contracheque × controle interno) |
 | Status da competência em 6 etapas + perfis DP/contabilidade/diretor | Funcionalidade | Do documento de requisitos |
 | Relatórios: resumo por setor, prestação ao diretor, pagamentos, relatório para contabilidade (HE em horas, faltas/atestados em dias) | Funcionalidade | Fases A–C |
@@ -1105,4 +1122,4 @@ O sistema é multi-tenant com isolamento por `id_empresa`:
 
 ---
 
-*Este documento foi atualizado em 2026-11-18. Versão atual: FOLHA BEM VINDO v1.1.0 (base Frimelo v4.58.1).*
+*Este documento foi atualizado em 2026-11-26. Versão atual: FOLHA BEM VINDO v1.2.0 (base Frimelo v4.58.1).*

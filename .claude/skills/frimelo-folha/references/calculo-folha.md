@@ -70,4 +70,17 @@ Edição em tempo real: `updateLancamento()` monta `cascadeUpdates` (Faltas→As
 - Padrão de funcionário novo: `insalubridade_perc` 0 e `assiduidade_perc` 0 (formulário, POST/PUT, `?? 0` no cálculo, DEFAULT da coluna). Frimelo: 20/11.
 - Atestado tem `dias` (informativo para a contabilidade); Assiduidade continua zerando só pela existência do atestado.
 - Etiqueta "Admissão dd/mm · N/30 dias" usa a mesma conta do `calcSalarioProporcional` (30 − dia + 1).
-- **Pendente da contabilidade** (não implementar por suposição): HE 60% (cód. 37) e base/divisor da hora (P1, P15), adicional noturno (100, P16), quebra de caixa 834 / produtividade 566 / gratificação de função 82 (P4), VT 816/687/902 (P10), faltas parciais 23 (P13), insalubridade por função e base (P17), suspensão e atestados longos (P18), salário-família (P19), GPS patronal e provisões (P21–P23), 13º/férias/rescisão (P29). Lista de rubricas do cliente: memória `project_bemvindo_planilha`.
+
+## Bem Vindo (v1.2.0) — respostas P1–P30
+| Cód | Rubrica | Fórmula |
+|---|---|---|
+| 82 | Grat. de função (%, cadastro `gratificacao_funcao_perc`, travada) | 33 × % ÷ 100 (`recalcularPercentualSobreSalarioTodos`); substitui a 88 (`ativo = 0`) |
+| 37 | HE 60% (HORA) | `calcBaseHE` (33 + 82 + 62) ÷ 220 × 1,6; fonte do DSR 59 |
+| 23 | Horas faltas (HORA, débito) | 33 ÷ 220 × horas; sem perda de DSR/assiduidade |
+| 816 | Desconto VT (%, cadastro `vt_desconto_perc` ≤ 6, travada) | (33 − 71 − 23) × %; teto `vt_custo_mensal` (0 = sem teto) |
+| — | Estagiário (`tipo_contrato = ESTAGIO`) | INSS 0, FGTS 0 |
+- Faltas 71 + 23 (`valorDescontoFaltas`) reduzem INSS, IRRF e FGTS. Helpers em `hooks/payrollBemVindo.ts`.
+- Cascata: Assid → ATS → 82 → Insalub → 23 → HE 49/37 → DSR → 816 → INSS → IRRF → FGTS. `updateLancamento` chama `recalcularCascataCompleta` (não há mais cascata manual).
+- Backend (`LancamentoService`): força 82 (% × salário), recalcula 37, 49 e 23; 816/INSS/IRRF vêm da tela. `FechamentoService` (fechamento expresso) não foi alinhado.
+- Exemplo conferido: Sal 2.000, 82 10%, insalub 20% c/ 1 falta → 62 = 310,87; HE 60% 10h = 182,61; 23 3h = 27,27; VT 6% = 114,36; DSR (nov/2026: 23 úteis, 7 DSR) = 69,47; INSS 220,00; FGTS 217,17.
+- **Pendente (2ª rodada):** base HE/divisor (E6), insalubridade por função (E7), DSR em faltas/suspensão (E8), códigos (E1), auxílios 859/689/902/687 (E3–E4), bônus 694 (E2), CCT (E5), quebra de caixa 834 / produtividade 566 (B5, B10), salário-família, 13º/férias. Lista de rubricas do cliente: memória `project_bemvindo_planilha`.

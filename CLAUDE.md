@@ -12,11 +12,12 @@ Este arquivo define as **regras globais de arquitetura, comandos e as melhores "
 Sempre que você (AI) for analisar, criar features ou debugar código neste projeto, **siga estritamente as seções abaixo.**
 
 ## ⚠️ 0. O QUE É ESTE PROJETO (ler primeiro)
-- **Fork da Folha Frimelo (base v4.58.1)**, criado em 2026-11-17 para o **Supermercado Bem Vindo** (Luziânia-GO, ~70 colaboradores, 8 setores). Versão própria recomeça em **1.0.0** (atual: **v1.1.0**, 2026-11-18).
+- **Fork da Folha Frimelo (base v4.58.1)**, criado em 2026-11-17 para o **Supermercado Bem Vindo** (Luziânia-GO, ~70 colaboradores, 8 setores). Versão própria recomeça em **1.0.0** (atual: **v1.2.0**, 2026-11-26).
 - **NUNCA alterar `/home/valterpcjria/FOLHA FRIMELO`** (outro sistema, em produção na Hostgator). Lá é só leitura. Correção que valha para os dois: avisar o Valter, não aplicar na Frimelo.
 - **Produção:** VPS Hostinger da Luzitec (`ssh luzitec-vps`), em Docker, em `/opt/bemvindo` (app em `127.0.0.1:8090` + MariaDB 11.4 próprio). Endereço `https://bemvindo.luzitec.cnt.br` (Caddy já configurado; aguardando DNS). Até o DNS: túnel `ssh -N -L 8090:127.0.0.1:8090 luzitec-vps` → http://localhost:8090.
 - **A mesma VPS roda o CRM da Luzitec em produção.** Nada pode afetá-lo: Caddy compartilhado (`/opt/luzitec/proxy/Caddyfile`), cron/timers e backup do CRM não são tocados. Conferir `https://crm.luzitec.cnt.br/` → 307 depois de qualquer mexida.
-- **Contabilidade é a oficial**: cálculos do sistema são prévia. Regras de rubricas novas (HE 60%, adicional noturno, suspensão, 13º/férias, GPS...) dependem das respostas às 30 perguntas enviadas ao escritório (P1–P30). **Não inventar regra** — esperar a resposta.
+- **Contabilidade é a oficial**: cálculos do sistema são prévia. P1–P30 respondidas em 25/11/2026 (regras em SPEC §0.6, v1.2.0); o que ficou em aberto está na 2ª rodada (E1–E15 escritório, B1–B12 Bem Vindo). **Não inventar regra** — esperar a resposta.
+- **Códigos de rubrica = os do Questor** (importação do escritório): código que já existia na Frimelo nunca muda (INSS 35, IRRF 1920...); rubrica só do Bem Vindo usa o código da lista deles.
 - Repositório: `valterpcjria-cloud/folha-bemvindo` (privado). Histórico antigo da Frimelo só na branch local `frimelo-historico` e em 42 tags v4.x locais (contêm senhas): **NUNCA `git push --tags`, `--all` nem push dessa branch**. Tag sempre explícita: `git push origin vX.Y.Z`.
 
 ---
@@ -56,7 +57,7 @@ Sempre atue invocando os conhecimentos das seguintes *skills* de engenharia:
 - **Commits:** Conventional Commits em PT (`feat|fix|docs|chore(escopo): descricao`), código e docs em commits separados, rodapé de co-autoria.
 - `create_zip.py` (zip Hostgator) **não é usado** no Bem Vindo.
 
-### 2.1 Fluxo de versão (Bem Vindo — validado em v1.0.0 e v1.1.0)
+### 2.1 Fluxo de versão (Bem Vindo — validado em v1.0.0, v1.1.0 e v1.2.0)
 1. **Perguntar a versão** ao Valter antes de bumpar.
 2. Implementar → testar no Docker local com dados fictícios → commit do código.
 3. `docker build -q -f docker/Dockerfile -t folha-bemvindo:X.Y.Z .` → conferir na imagem: sem `.env`, versão no bundle, 4 extensões (`calendar gd bcmath pdo_mysql`), `php -l` dos PHP alterados.
@@ -199,7 +200,7 @@ Se precisar adicionar nova rubrica do tipo "valor fixo" (como Gratificação):
 
 ---
 
-## 📌 5B. REGRAS DO BEM VINDO (v1.0.0 → v1.1.0)
+## 📌 5B. REGRAS DO BEM VINDO (v1.0.0 → v1.2.0)
 
 ### Setores e hierarquia (v1.0.0)
 - Tabela `setores` (8: Administrativo, Açougue, Padaria, FLV, PGC, Frente de Loja, Vendas Online/Escolas, Entregas); `cargos` com `id_setor` + `ordem_hierarquia` (1 = topo), único por (empresa, setor, nome). Setor/cargo **desativa**, não exclui. Tela `/setores` (`SetoresView` + `components/setores/`).
@@ -215,6 +216,12 @@ Se precisar adicionar nova rubrica do tipo "valor fixo" (como Gratificação):
 - Atestado ganhou `competencia_atestados.dias` (1..31, NULL = não informado). Assiduidade continua dependendo só de existir atestado. `GET /atestados` → `{data:[ids], dias:{id:n}}`; `POST` com `dias` opcional (ausente = mantém); valida empresa; competência FECHADA → 409.
 - Funcionário novo: **insalubridade e assiduidade 0%** (Frimelo: 20%/11%) — formulário, POST/PUT, fallback do cálculo e DEFAULT da coluna.
 
+### Rubricas confirmadas pela contabilidade (v1.2.0) — detalhe em SPEC §0.6
+- **82 Gratificação de função** (% no cadastro, `gratificacao_funcao_perc`) substitui a **88** (desativada, `ativo = 0`). Base HE = 33 + 82 + 62.
+- **37 HE 60%** = base HE ÷ 220 × 1,6; entra no DSR 59 (`DSR_HE_CONFIG` + `dsr_he_config_eventos`). **23 Horas faltas** = 33 ÷ 220 × horas.
+- **816 Desconto VT** = (33 − 71 − 23) × % (≤ 6, `vt_desconto_perc`), teto `vt_custo_mensal`. **Estagiário**: INSS e FGTS 0.
+- Faltas 71 + 23 reduzem bases de INSS, IRRF e FGTS. Helpers em `hooks/payrollBemVindo.ts`; `updateLancamento` roda `recalcularCascataCompleta` (não repetir cascata manual). Rubrica `ativo = 0` fica fora do grid e da exportação.
+
 ### Infra (v1.0.0 → v1.1.0)
 - Imagem `php:8.3-apache` com `calendar`, `gd`, `bcmath`, `pdo_mysql` (sem `calendar` o DSR dá 500).
 - Backup diário 02:30 (`bemvindo-backup.timer`): 14 dias em `/opt/bemvindo/backup/copias` + 30 dias no Drive (`luzitec-backup-cripto:bemvindo/`). Ver `docker/vps/LEIA-ME.md`. O client_id compartilhado do rclone será desativado em 2026 → envio ao Drive (Bem Vindo e CRM) vai falhar até criar client_id próprio.
@@ -222,11 +229,11 @@ Se precisar adicionar nova rubrica do tipo "valor fixo" (como Gratificação):
 ---
 
 ## 📋 6. PENDÊNCIAS (fonte única: SPEC.md §20)
-- **Aguardando contabilidade (P1–P30):** rubricas do Bem Vindo (HE 60% cód. 37, adicional noturno 100, quebra de caixa 834, produtividade 566, VT 816 etc.), suspensão, 13º/férias/rescisão, GPS/custo, retorno oficial e conciliação.
+- **Aguardando 2ª rodada (E1–E15 / B1–B12):** base da HE e divisor, insalubridade por função, DSR em faltas/suspensão, códigos pendentes, auxílios (859/689/902/687), quebra de caixa 834, produtividade 566, bônus aniversário 694, salário-família, 13º/férias/rescisão, encargos do Simples, retorno oficial e conciliação.
 - Fase B (controles internos): adiantamentos (vale dia 21, convênios), saldo a pagar, pagamento banco/Pix/loja e conferência; status de competência em 6 etapas; perfis DP/contabilidade/diretor.
 - Relatório para a contabilidade (HE em horas, faltas/atestados em dias) e os demais relatórios do documento de requisitos.
 - DNS `bemvindo.luzitec.cnt.br` (terceiro cria) → conferir HTTPS. CEP da empresa. Feriados municipais de Luziânia.
 - Herdadas da Frimelo: remover transição v4.58.0 (`Authorization` legado), scripts `.php` soltos, CSP enforced, erro TS em `FormulasView.tsx`.
 
 ---
-*Este CLAUDE.md foi gerado nativamente pelo Antigravity em colaboração com o Usuário e adaptado para a Folha Bem Vindo. Última atualização: v1.1.0 (2026-11-18)*
+*Este CLAUDE.md foi gerado nativamente pelo Antigravity em colaboração com o Usuário e adaptado para a Folha Bem Vindo. Última atualização: v1.2.0 (2026-11-26)*

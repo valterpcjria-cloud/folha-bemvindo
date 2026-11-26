@@ -5,7 +5,7 @@ description: Conhecimento completo do sistema FOLHA BEM VINDO (fork da Folha Fri
 
 # FOLHA BEM VINDO — Skill do Sistema
 
-Folha de pagamento do **Supermercado Bem Vindo** (Luziânia-GO, ~70 colaboradores, 8 setores), operada por **Valter** (dono/operador/implantador, PT-BR, não-dev de rotina). Fork da Folha Frimelo v4.58.1; versão própria desde 1.0.0 (atual 1.1.0).
+Folha de pagamento do **Supermercado Bem Vindo** (Luziânia-GO, ~70 colaboradores, 8 setores), operada por **Valter** (dono/operador/implantador, PT-BR, não-dev de rotina). Fork da Folha Frimelo v4.58.1; versão própria desde 1.0.0 (atual 1.2.0).
 Produção: Docker na VPS Hostinger da Luzitec (`ssh luzitec-vps`, `/opt/bemvindo`, app em `127.0.0.1:8090`), **a mesma VPS do CRM da Luzitec em produção**. Domínio `bemvindo.luzitec.cnt.br` (aguardando DNS; até lá túnel SSH).
 A pasta `/home/valterpcjria/FOLHA FRIMELO` é OUTRO sistema em produção — **nunca alterar** (só leitura).
 
@@ -15,7 +15,7 @@ Documentação viva (consulte para detalhe fino): `CLAUDE.md` (§0, §2.1, §5B)
 
 1. **Pergunte a versão antes de bumpar.** O número tem significado para o Valter.
 2. **Não quebre o CRM.** Caddy, cron, timers e backup do CRM são compartilhados/vizinhos: não mexer; depois de qualquer ação na VPS conferir `https://crm.luzitec.cnt.br/` → 307.
-3. **A contabilidade é a oficial.** Rubricas/regras novas (HE 60%, adicional noturno, suspensão, 13º/férias, GPS, incidências) só com a resposta do escritório (P1–P30). Não implementar por suposição — diga o que espera de qual pergunta.
+3. **A contabilidade é a oficial.** Regras novas só com resposta do escritório (P1–P30 respondidas em 25/11/2026; pendências na 2ª rodada E1–E15/B1–B12). Não implementar por suposição — diga o que espera de qual pergunta. **Códigos = Questor:** código existente nunca muda; rubrica só do Bem Vindo usa o código da lista deles.
 4. **Faça só o que foi pedido em cada etapa** e não fuja da base existente ("acrescentar o que eles pediram").
 5. **Teste com dados fictícios no Docker local** antes de subir; na VPS (dados reais) nada de dado "de teste".
 6. **Competência FECHADA é imutável** (snapshot). Backend recusa escrita; frontend só calcula 59/1900 em fechada.

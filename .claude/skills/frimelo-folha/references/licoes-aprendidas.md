@@ -25,6 +25,8 @@ Tabela histórica completa: `SPEC.md` §16. Ao descobrir uma nova, registre aqui
 | **BV** Tela sempre no cálculo reserva de feriados | `:uf` repetido na query → HY093 (prepares nativos) | Nomes distintos (`:uf2`). A Frimelo tem o mesmo bug — avisado, não mexido |
 | **BV** PDF "- -GO" | Coluna é `nome_cidade`, código lia `cidade` | Fallback `cidade ?? nome_cidade` |
 | **BV** Funcionário novo com insalubridade 324,20 sem ter direito | Padrão herdado 20% / assiduidade 11% | v1.1.0: padrão 0% em 4 lugares (form, API, cálculo, DEFAULT) |
+| **BV** Proposta de trocar INSS 35 → 1950 pela resposta do escritório | Código do Questor é o da outra folha | Código existente nunca muda; só rubrica nova usa código novo |
+| **BV** Cascata manual em `updateLancamento` esquecia rubricas novas | Cadeia repetida à mão em 3 lugares | v1.2.0: edição chama `recalcularCascataCompleta` |
 | **BV** Imagem anterior sumiu da VPS | Cron do CRM `docker image prune -af --filter until=24h` | Reenviar do PC; não mexer no cron do CRM |
 | **BV** "Conexão recusada" em localhost:8090 | Túnel SSH fechado | `ssh -N -L 8090:127.0.0.1:8090 luzitec-vps` |
 | **BV** Consulta via `ssh '... -e "..."'` quebra | Aspas aninhadas | Mandar o SQL pelo stdin |

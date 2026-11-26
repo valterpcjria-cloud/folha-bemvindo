@@ -3,6 +3,28 @@
 Fork da Folha Frimelo (base v4.58.1) para o Supermercado Bem Vindo. A numeração recomeça em 1.0.0.
 O histórico da Frimelo continua abaixo, a partir de [4.58.1].
 
+## [1.2.0] - 2026-11-26
+
+Primeiras regras de cálculo confirmadas pelo escritório de contabilidade (respostas P1–P30, 25/11/2026). Códigos de rubrica = os do Questor.
+
+### Adicionado
+- **Gratificação de função (82)** em % do salário, no cadastro do funcionário (P4). Entra na base da hora extra.
+- **Horas extras 60% (37)**: (salário + gratificação de função + insalubridade) ÷ 220 × 1,6 × horas; entra no DSR s/ HE (59), como a HE 100% (P1).
+- **Horas faltas (23)** para atrasos e saídas antecipadas: salário ÷ 220 × horas; não desconta DSR (P13).
+- **Desconto do vale-transporte (816)**: % do cadastro (até 6%) sobre o salário menos faltas (71 e 23), limitado ao custo mensal do VT informado no cadastro (P10).
+- Cadastro do funcionário: campos Grat. de Função (%), Desc. VT (%) e Custo do VT (R$).
+
+### Alterado
+- **Gratificação 88** (herdada da Frimelo) desativada: sai do cadastro, do grid e da exportação. A gratificação do Bem Vindo é a 82.
+- **Estagiário** (vínculo ESTAGIO): sem INSS e sem FGTS; IRRF continua (P20).
+- Faltas (71) e horas faltas (23) passam a reduzir também a **base do FGTS** (antes só INSS e IRRF).
+- Edição no grid recalcula pela cascata completa (a mesma da carga e do salvar).
+- Abertura de competência copia as rubricas 33 e 82 da competência anterior (era 33 e 88).
+- Rubrica com `ativo = 0` não aparece no grid nem na exportação.
+
+### Banco de Dados
+- `docker/banco/13_bv_rubricas_v120.sql`: colunas `funcionarios.gratificacao_funcao_perc`, `vt_desconto_perc`, `vt_custo_mensal`; rubricas 82, 37, 23 e 816; 88 com `ativo = 0`; 37 em `dsr_he_config_eventos`. Idempotente; rodar antes de trocar a imagem.
+
 ## [1.1.0] - 2026-11-18
 
 ### Adicionado

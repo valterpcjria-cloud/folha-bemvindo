@@ -1,7 +1,7 @@
 # PRD — Product Requirements Document
 ## Sistema FOLHA BEM VINDO — Folha de Pagamento do Supermercado Bem Vindo (fork da Folha Frimelo)
 
-> **Versão:** 3.0 | **Data:** 2026-11-18 | **Status:** Em implantação — v1.1.0 no ar na VPS (aguardando DNS e respostas da contabilidade)
+> **Versão:** 3.1 | **Data:** 2026-11-26 | **Status:** Em implantação — v1.2.0 no ar na VPS (aguardando DNS e a 2ª rodada de respostas)
 > **Proprietário do Produto:** Valter (operador/implantador) · **Cliente:** Supermercado Bem Vindo (Luziânia-GO)
 > **Responsável Técnico:** Claude Code / Antigravity
 > **Como ler:** a §0 é o produto Bem Vindo. As §1–§13 descrevem a base herdada da Frimelo, que o Bem Vindo aproveita ("não fugir da base do sistema existente; acrescentar o que eles pediram").
@@ -13,7 +13,7 @@
 ### 0.1 Fonte dos requisitos
 - Documento "REQUISITOS-FOLHA-BEM-VINDO" (versão inicial, out/2026), lista de rubricas (`RUBRICAS-BEM-VINDO.xlsx`, 19 rubricas com códigos) e modelo da planilha de fechamento (8 blocos de setor). Arquivos do cliente ficam fora do repositório.
 - **Premissa:** a contabilidade valida rubricas, incidências e cálculos e faz o fechamento oficial. Valores do sistema são prévia interna; o sistema deve importar o retorno oficial e apontar divergências.
-- 30 perguntas enviadas ao escritório (P1–P30, 17/11/2026); respostas em preparação. Protótipo da Matriz do DP entregue para aprovação do DP/diretoria (usado como referência visual).
+- 30 perguntas enviadas ao escritório (P1–P30, 17/11/2026), respondidas em 25/11/2026; 2ª rodada enviada em 26/11/2026 (escritório E1–E15, Bem Vindo B1–B12). Protótipo da Matriz do DP entregue para aprovação do DP/diretoria (usado como referência visual).
 
 ### 0.2 Saídas pedidas (a partir de uma base única de lançamentos)
 1. **Matriz do DP** por setor e hierarquia, com subtotal por setor e custo por pessoa.
@@ -29,7 +29,8 @@
 | A.2 | Matriz de lançamentos por setor com subtotais | ✅ v1.0.0 |
 | — | Marca Bem Vindo, Docker na VPS, backup diário | ✅ v1.0.0 / v1.1.0 |
 | A.3 | Etiquetas do protótipo (nível, aniversário, admissão) e atestado em dias; padrão de insalubridade 0% | ✅ v1.1.0 |
-| A.4 | Rubricas do Bem Vindo (HE 60%, adicional noturno, quebra de caixa, produtividade, VT, suspensão...) + relatório para contabilidade | ⏳ aguardando contabilidade |
+| A.4 | Rubricas confirmadas: gratificação de função 82, HE 60% 37, horas faltas 23, desconto VT 816, estagiário sem INSS/FGTS (sem adicional noturno: P16) | ✅ v1.2.0 |
+| A.5 | Rubricas pendentes (quebra de caixa, produtividade, auxílios, suspensão, salário-família...) + relatório para contabilidade | ⏳ 2ª rodada |
 | B | Adiantamentos (vale dia 21, convênios), saldo, pagamentos banco/Pix/loja, prestação ao diretor, status em 6 etapas, perfis DP/contabilidade/diretor | ⏳ depende da P24 |
 | C | Retorno oficial da contabilidade e conciliação; 13º/férias/rescisão | ⏳ depende de P26/P29 |
 | D | Indicadores (quadro H/M, absenteísmo, custo por setor, custo ÷ receita) | 🔜 |
