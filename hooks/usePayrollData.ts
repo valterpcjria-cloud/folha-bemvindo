@@ -65,7 +65,7 @@ function calcFeriadosMoveis(ano: number): string[] {
  * Dias úteis = dias do mês excluindo domingos e feriados.
  * Dias DSR   = domingos + feriados (dias que geram DSR).
  */
-function calcDiasComFeriados(
+export function calcDiasComFeriados(
     mes: number,
     ano: number,
     feriadosApi: Array<{ data: string; recorrente?: number | boolean; ativo?: number | boolean; tipo?: string; uf?: string; cidade?: string }> = []
@@ -756,6 +756,29 @@ function filtrarVisiveis(funcionarios: Funcionario[], competenciaAberta: boolean
 
 // ─────────────────────────────────────────────────────────────────────────────
 
+/**
+ * Bem Vindo v1.3.0: cadeia completa de cálculo de uma competência (a mesma do grid).
+ * salário do cadastro → rubricas do cadastro → cascata. Usada pelo grid e pelos relatórios,
+ * para que os relatórios mostrem exatamente os valores da tela (inclusive DSR 59, que não é salvo).
+ */
+export function calcularFolhaCompetencia(
+    lancamentos: Record<string, Partial<Lancamento>>,
+    eventos: EventoFolha[],
+    funcionarios: Funcionario[],
+    competencia: Competencia,
+    dias: { dias_uteis: number; dias_dsr: number },
+    atestados: Set<number>
+): { funcionarios: Funcionario[]; lancamentos: Record<string, Partial<Lancamento>> } {
+    const compAberta = competencia.status === StatusCompetencia.ABERTA;
+    const funcsCalc = filtrarVisiveis(funcionarios, compAberta);
+    const comSalario = aplicarSalarioBaseFuncionarios(lancamentos, eventos, funcsCalc, compAberta, competencia);
+    const comRubricas = aplicarRubricasCadastroFuncionarios(comSalario, eventos, funcsCalc, compAberta);
+    return {
+        funcionarios: funcsCalc,
+        lancamentos: recalcularCascataCompleta(comRubricas, eventos, funcsCalc, dias.dias_uteis, dias.dias_dsr, atestados, compAberta),
+    };
+}
+
 export const usePayrollData = () => {
     const { selectedCompanyId } = useAuth();
     const [competencias, setCompetencias] = useState<Competencia[]>([]);
@@ -866,11 +889,7 @@ export const usePayrollData = () => {
 
                         // Aplica salario_base → r33 (só em comp ABERTA, com proporcionalidade na admissão) → RubricasCadastro → cascata completa
                         // v4.54.0: DESLIGADOS ficam fora da injeção/cálculo em comp ABERTA.
-                        const compAberta = comp.status === StatusCompetencia.ABERTA;
-                        const funcsCalc = filtrarVisiveis(funcs, compAberta);
-                        const comSalario = aplicarSalarioBaseFuncionarios(mapLancamentos(lancsData), sortedEvs, funcsCalc, compAberta, comp);
-                        const comRubricas = aplicarRubricasCadastroFuncionarios(comSalario, sortedEvs, funcsCalc, compAberta);
-                        setLancamentos(recalcularCascataCompleta(comRubricas, sortedEvs, funcsCalc, newDias.dias_uteis, newDias.dias_dsr, atestSet, compAberta));
+                        setLancamentos(calcularFolhaCompetencia(mapLancamentos(lancsData), sortedEvs, funcs, comp, newDias, atestSet).lancamentos);
 
                         // DEBUG: útil para confirmar que feriados estão sendo considerados
                         console.debug('[DSR] dias_uteis=', newDias.dias_uteis, 'dias_dsr=', newDias.dias_dsr, 'fonte=', dias ? 'backend' : 'local+feriados', 'feriados=', ferList.length, 'atestados=', atestSet.size);
@@ -912,11 +931,7 @@ export const usePayrollData = () => {
                 mapped[`${l.funcionario_id}_${l.evento_id}`] = l;
             });
             // Aplica salario_base → r33 → RubricasCadastro → cascata completa (v4.54.0: desligados fora em comp aberta)
-            const compAberta = comp.status === StatusCompetencia.ABERTA;
-            const funcsCalc = filtrarVisiveis(funcionarios, compAberta);
-            const comSalario = aplicarSalarioBaseFuncionarios(mapped, eventos, funcsCalc, compAberta, comp);
-            const comRubricas = aplicarRubricasCadastroFuncionarios(comSalario, eventos, funcsCalc, compAberta);
-            setLancamentos(recalcularCascataCompleta(comRubricas, eventos, funcsCalc, newDias.dias_uteis, newDias.dias_dsr, atestSet, compAberta));
+            setLancamentos(calcularFolhaCompetencia(mapped, eventos, funcionarios, comp, newDias, atestSet).lancamentos);
 
             console.debug('[DSR] troca comp → dias_uteis=', newDias.dias_uteis, 'dias_dsr=', newDias.dias_dsr, 'fonte=', dias ? 'backend' : 'local+feriados');
         }

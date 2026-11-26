@@ -17,6 +17,7 @@ import {
 import { RelacaoCalculoPDF } from '../services/RelacaoCalculoPDF';
 import { ModalEspelhoFolha } from '../components/ModalEspelhoFolha';
 import { calcularINSS } from '../utils/taxCalculations';
+import RelatorioBemVindo, { TipoRelatorioBV } from './reports/RelatorioBemVindo';
 
 const COLORS = ['#0284c7', '#0ea5e9', '#38bdf8', '#7dd3fc', '#bae6fd', '#e0f2fe'];
 
@@ -71,7 +72,10 @@ function adicionarINSSSintetico(
   return result;
 }
 
-type ReportType = 'DASHBOARD' | 'FICHA_FINANCEIRA' | 'RESUMO_FOLHA' | 'EVENTOS' | 'RELACAO_CALCULO';
+type ReportType = 'DASHBOARD' | 'FICHA_FINANCEIRA' | 'RESUMO_FOLHA' | 'EVENTOS' | 'RELACAO_CALCULO' | TipoRelatorioBV;
+
+// Bem Vindo v1.3.0: relatórios do DP com tela própria (views/reports/)
+const ehRelatorioBV = (t: ReportType): t is TipoRelatorioBV => t.startsWith('BV_');
 
 const ReportsView: React.FC = () => {
   const [activeReport, setActiveReport] = useState<ReportType>('DASHBOARD');
@@ -117,7 +121,7 @@ const ReportsView: React.FC = () => {
 
   // Fetch report data when report type or filters change
   useEffect(() => {
-    if (activeReport === 'DASHBOARD') return;
+    if (activeReport === 'DASHBOARD' || ehRelatorioBV(activeReport)) return;
 
     // v4.52.16: limpa reportData antes do fetch para evitar render do shape antigo
     setReportData([]);
@@ -300,6 +304,13 @@ const ReportsView: React.FC = () => {
             </div>
           </div>
 
+          <p className="text-[10px] font-black text-sky-300/70 uppercase tracking-widest mb-2 pl-1">Bem Vindo</p>
+          <div className="space-y-2 mb-6">
+            <SidebarItem type="BV_CONTABILIDADE" label="Para a Contabilidade" icon={ListChecks} />
+            <SidebarItem type="BV_RESUMO_SETOR" label="Resumo por Setor" icon={LayoutGrid} />
+            <SidebarItem type="BV_PAGAMENTOS" label="Pagamentos" icon={Wallet} />
+          </div>
+          <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-2 pl-1">Geral</p>
           <div className="space-y-2">
             <SidebarItem type="DASHBOARD" label="Dashboard Geral" icon={PieChart} />
             <SidebarItem type="FICHA_FINANCEIRA" label="Ficha Financeira" icon={FileText} />
@@ -319,6 +330,9 @@ const ReportsView: React.FC = () => {
 
       {/* Main Content Area */}
       <div className="flex-1 space-y-6">
+        {ehRelatorioBV(activeReport) ? (
+          <RelatorioBemVindo key={activeReport} tipo={activeReport} competencias={competencias} />
+        ) : (<>
 
         {/* Navigation & Actions Header */}
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center bg-white p-6 rounded-2xl border border-slate-200 shadow-sm gap-4">
@@ -712,6 +726,7 @@ const ReportsView: React.FC = () => {
             </>
           )}
         </div>
+        </>)}
       </div>
 
       {/* Print Specific CSS */}
