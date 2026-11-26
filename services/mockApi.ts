@@ -1,5 +1,5 @@
 
-import { Funcionario, EventoFolha, Competencia, Lancamento, StatusFuncionario, StatusCompetencia, AuditLog, Unidade, DsrCalculado, User, Setor, Cargo, AtestadosCompetencia } from '../types';
+import { Funcionario, EventoFolha, Competencia, Lancamento, StatusFuncionario, StatusCompetencia, AuditLog, Unidade, DsrCalculado, User, Setor, Cargo, AtestadosCompetencia, EtapaCompetencia, HistoricoEtapa } from '../types';
 import { MANDATORY_EVENTS } from '../constants';
 import { CONFIG } from '../config';
 import { findValue } from '../utils/dataHelpers';
@@ -518,6 +518,16 @@ export const api = {
       method: 'DELETE',
       body: JSON.stringify({ justificativa })
     });
+  },
+
+  // Bem Vindo v1.4.0: fluxo em 6 etapas
+  mudarEtapaCompetencia: async (id: number, para: EtapaCompetencia, observacao = '') => {
+    return fetchApi(`/competencias/${id}/etapa`, { method: 'POST', body: JSON.stringify({ para, observacao }) });
+  },
+
+  getHistoricoCompetencia: async (id: number): Promise<HistoricoEtapa[]> => {
+    const res = await fetchApi(`/competencias/${id}/historico`);
+    return res.data || [];
   },
 
   reopenCompetencia: async (id: number, justificativa: string) => {

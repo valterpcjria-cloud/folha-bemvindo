@@ -10,6 +10,7 @@ import { MONTHLY_WORKING_HOURS, OVERTIME_100_MULTIPLIER, OVERTIME_60_MULTIPLIER,
 import { useAuth } from '../contexts/AuthContext';
 import { calcularINSS, calcularIRRF, calcularBaseIncidencia, calcularFGTS } from '../utils/taxCalculations';
 import { valorDescontoFaltas, isEstagiario, recalcularHorasFaltasTodos, recalcularValeTransporteTodos } from './payrollBemVindo';
+import { ehSomenteLeitura } from '../constants/etapasCompetencia';
 import { MENSAGEM_ALTERACOES_NAO_SALVAS, setAlteracoesPendentes, confirmarDescarteAlteracoes, registrarSalvamento } from '../utils/unsavedChanges';
 
 export interface PayrollTotals {
@@ -780,7 +781,9 @@ export function calcularFolhaCompetencia(
 }
 
 export const usePayrollData = () => {
-    const { selectedCompanyId } = useAuth();
+    const { selectedCompanyId, user } = useAuth();
+    // Bem Vindo v1.4.0: só lança quem não é perfil de consulta, e só na etapa ABERTA (status ABERTA)
+    const perfilSomenteLeitura = ehSomenteLeitura(user?.perfil);
     const [competencias, setCompetencias] = useState<Competencia[]>([]);
     const [selectedComp, setSelectedComp] = useState<Competencia | null>(null);
     const [funcionarios, setFuncionarios] = useState<Funcionario[]>([]);
@@ -947,6 +950,7 @@ export const usePayrollData = () => {
         // v4.52.0: rubrica 33 (Salário) é travada — alterações só via cadastro do funcionário
         // v4.52.11: rubrica 35 (INSS) é travada — sempre auto-calculada pela tabela progressiva
         // v4.52.20: rubricas do cadastro (62, 833, 1000, 936, 4004) são travadas
+        if (perfilSomenteLeitura || selectedComp?.status !== StatusCompetencia.ABERTA) return;
         const eventBeingEdited = eventos.find(e => e.id === eventoId);
         const lockedCodes: number[] = [
             EVENT_CODES.SALARIO, EVENT_CODES.INSS,
@@ -1034,7 +1038,7 @@ export const usePayrollData = () => {
             const stateB = { ...prev, [key]: updated };
             return recalcularCascataCompleta(stateB, eventos, funcionarios, diasCalendario.dias_uteis, diasCalendario.dias_dsr, atestados, true);
         });
-    }, [eventos, funcionarios, diasCalendario, atestados]);
+    }, [eventos, funcionarios, diasCalendario, atestados, selectedComp, perfilSomenteLeitura]);
 
     // Salvar todos os lançamentos
     const handleSave = useCallback(async (): Promise<boolean> => {

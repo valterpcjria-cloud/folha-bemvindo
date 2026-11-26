@@ -2,6 +2,7 @@
 // /api/v1/routes/competencias.php
 
 $method = $_SERVER['REQUEST_METHOD'];
+require_once __DIR__ . '/../lib/EtapasCompetencia.php'; // Bem Vindo v1.4.0
 
 // Usar o $route_parts definido no index.php
 // $route_parts[0] é 'competencias'
@@ -11,53 +12,46 @@ $method = $_SERVER['REQUEST_METHOD'];
 if ($method == 'GET') {
     // Qualquer usuário autenticado pode ver competências da sua empresa
     $empresa_id = $authUser['id_empresa'];
+
+    // Bem Vindo v1.4.0: histórico das etapas (/competencias/{id}/historico)
+    if (isset($route_parts[1]) && is_numeric($route_parts[1]) && ($route_parts[2] ?? '') === 'historico') {
+        echo json_encode(["data" => EtapasCompetencia::historico($conn, (int)$empresa_id, (int)$route_parts[1])]);
+        exit;
+    }
     $stmt = $conn->prepare("SELECT * FROM competencias WHERE id_empresa = ? ORDER BY ano DESC, mes DESC");
     $stmt->execute([$empresa_id]);
     echo json_encode(["data" => $stmt->fetchAll()]);
 } 
 elseif ($method == 'POST') {
+    // Bem Vindo v1.4.0: mudança de etapa (/competencias/{id}/etapa) — cada perfil faz a sua etapa
+    // (CONTABILIDADE valida, DIRETOR autoriza), por isso vem antes do requireRole ADMIN/RH.
+    if (isset($route_parts[1]) && is_numeric($route_parts[1]) && ($route_parts[2] ?? '') === 'etapa') {
+        requireRole($authUser, ['ADMIN', 'RH', 'CONTABILIDADE', 'DIRETOR']);
+        $data = getJsonInput();
+        [$codigo, $corpo] = EtapasCompetencia::mudar($conn, $authUser, (int)$route_parts[1], (string)($data['para'] ?? ''), (string)($data['observacao'] ?? ''));
+        http_response_code($codigo);
+        echo json_encode($corpo);
+        exit;
+    }
+
     // Apenas ADMIN e RH podem abrir, fechar ou reabrir competências
     requireRole($authUser, ['ADMIN', 'RH']);
     $empresa_id = $authUser['id_empresa'];
 
-    // Se for uma ação de fechar (/competencias/{id}/close)
+    // Fechar (/competencias/{id}/close) — v1.4.0: equivale a enviar para conferência (ABERTA → EM_CONFERENCIA)
     if (isset($route_parts[1]) && is_numeric($route_parts[1]) && isset($route_parts[2]) && $route_parts[2] == 'close') {
-        $id = $route_parts[1];
-        $stmt = $conn->prepare("UPDATE competencias SET status = 'FECHADA', data_fechamento = NOW() WHERE id = ? AND id_empresa = ?");
-        $stmt->execute([$id, $empresa_id]);
-        registrarLog($conn, $authUser['user_id'], 'COMPETENCIA', $id, 'FECHAMENTO', "Fechou competência ID $id", $empresa_id);
-        echo json_encode(["success" => true]);
+        [$codigo, $corpo] = EtapasCompetencia::mudar($conn, $authUser, (int)$route_parts[1], 'EM_CONFERENCIA', '');
+        http_response_code($codigo);
+        echo json_encode($corpo);
         exit;
     }
 
-    // --- NOVA AÇÃO: Reabrir (/competencias/{id}/reopen) ---
+    // Reabrir (/competencias/{id}/reopen) — v1.4.0: devolve para ABERTA pelas regras das etapas
     if (isset($route_parts[1]) && is_numeric($route_parts[1]) && isset($route_parts[2]) && $route_parts[2] == 'reopen') {
-        $id = $route_parts[1];
         $data = getJsonInput();
-        $justificativa = isset($data['justificativa']) ? trim($data['justificativa']) : '';
-
-        if (empty($justificativa)) {
-            http_response_code(400);
-            echo json_encode(["error" => "Justificativa obrigatória para reabrir competência"]);
-            exit;
-        }
-
-        // Valida se a competência pertence à empresa e está FECHADA
-        $stmt_check = $conn->prepare("SELECT status FROM competencias WHERE id = ? AND id_empresa = ?");
-        $stmt_check->execute([$id, $empresa_id]);
-        $comp = $stmt_check->fetch();
-
-        if (!$comp || $comp['status'] !== 'FECHADA') {
-            http_response_code(400);
-            echo json_encode(["error" => "Apenas competências FECHADAS podem ser reabertas"]);
-            exit;
-        }
-
-        $stmt = $conn->prepare("UPDATE competencias SET status = 'ABERTA', data_fechamento = NULL, justificativa_status = ? WHERE id = ? AND id_empresa = ?");
-        $stmt->execute([$justificativa, $id, $empresa_id]);
-
-        registrarLog($conn, $authUser['user_id'], 'COMPETENCIA', $id, 'REABERTURA', "Reabriu competência ID $id. Motivo: $justificativa", $empresa_id);
-        echo json_encode(["success" => true]);
+        [$codigo, $corpo] = EtapasCompetencia::mudar($conn, $authUser, (int)$route_parts[1], 'ABERTA', (string)($data['justificativa'] ?? ''));
+        http_response_code($codigo);
+        echo json_encode($corpo);
         exit;
     }
 
@@ -69,6 +63,7 @@ elseif ($method == 'POST') {
 
     $data['id'] = $conn->lastInsertId();
     $data['status'] = 'ABERTA';
+    $data['etapa'] = 'ABERTA';
     registrarLog($conn, $authUser['user_id'], 'COMPETENCIA', $data['id'], 'ABERTURA', "Abriu competência {$data['mes']}/{$data['ano']}", $empresa_id);
 
     // Copia Rubricas 33 (Salário) e 82 (Gratificação de função — Bem Vindo v1.2.0; na Frimelo era a 88)

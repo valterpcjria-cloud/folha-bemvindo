@@ -68,6 +68,10 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
       { path: '/importar', label: 'Importação', icon: Upload },
       { path: '/exportar', label: 'Exportação', icon: Download },
     ] : []),
+    // Bem Vindo v1.4.0: a contabilidade exporta a folha (só leitura)
+    ...(user?.perfil === 'CONTABILIDADE' ? [
+      { path: '/exportar', label: 'Exportação', icon: Download },
+    ] : []),
     ...(user?.perfil === 'SUPERADMIN' ? [
       { path: '/parametros', label: 'Parametros', icon: Settings },
       { path: '/formulas', label: 'Fórmulas', icon: Variable },

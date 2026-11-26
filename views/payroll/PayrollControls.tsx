@@ -6,6 +6,7 @@
 import React from 'react';
 import { Search, Layers, List } from 'lucide-react';
 import { Competencia } from '../../types';
+import { nomeEtapa } from '../../constants/etapasCompetencia';
 
 interface PayrollControlsProps {
     competencias: Competencia[];
@@ -53,7 +54,7 @@ const PayrollControls: React.FC<PayrollControlsProps> = ({
                         >
                             {competencias.map(c => (
                                 <option key={c.id} value={c.id}>
-                                    {c.mes.toString().padStart(2, '0')}/{c.ano}
+                                    {c.mes.toString().padStart(2, '0')}/{c.ano} · {nomeEtapa(c)}
                                 </option>
                             ))}
                         </select>

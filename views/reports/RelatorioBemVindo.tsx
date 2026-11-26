@@ -6,6 +6,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { Calendar, FileSpreadsheet, FileText, FileDown, Loader2, AlertTriangle, Info } from 'lucide-react';
 import { api } from '../../services/mockApi';
 import { Competencia } from '../../types';
+import { nomeEtapa } from '../../constants/etapasCompetencia';
 import { carregarFolhaCalculada, FolhaCalculada, rotuloCompetencia } from './folhaCalculada';
 import { montarRelatorioContabilidade, montarResumoPorSetor, montarRelacaoPagamentos, TabelaRelatorio } from './montarRelatorios';
 import { exportarRelatorio, formatarCelula, FormatoExportacao } from './exportarRelatorio';
@@ -80,7 +81,7 @@ const RelatorioBemVindo: React.FC<Props> = ({ tipo, competencias }) => {
       await exportarRelatorio({
         arquivo: `BemVindo_${ARQUIVOS[tipo]}_${comp.replace('/', '-')}`,
         titulo: TITULOS_BV[tipo],
-        subtitulo: `${empresa || 'Supermercado Bem Vindo'} · Competência ${comp} (${folha.competencia.status === 'ABERTA' ? 'aberta' : 'fechada'})`,
+        subtitulo: `${empresa || 'Supermercado Bem Vindo'} · Competência ${comp} (${nomeEtapa(folha.competencia).toLowerCase()})`,
         colunas: tabela.colunas,
         linhas: tabela.linhas,
         rodape: tabela.rodape,
@@ -127,7 +128,7 @@ const RelatorioBemVindo: React.FC<Props> = ({ tipo, competencias }) => {
               className="w-full pl-10 pr-4 py-2 bg-white border border-slate-200 rounded-xl text-sm font-bold text-slate-700 outline-none focus:ring-2 focus:ring-sky-500/20"
             >
               {competencias.map(c => (
-                <option key={c.id} value={c.id}>{rotuloCompetencia(c)} · {c.status === 'ABERTA' ? 'aberta' : 'fechada'}</option>
+                <option key={c.id} value={c.id}>{rotuloCompetencia(c)} · {nomeEtapa(c)}</option>
               ))}
             </select>
           </div>

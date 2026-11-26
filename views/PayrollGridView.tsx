@@ -26,6 +26,8 @@ import PayrollPagination from './payroll/PayrollPagination';
 import PayrollGroupedBody from './payroll/PayrollGroupedBody';
 import { agruparPorSetor } from './payroll/agruparPorSetor';
 import { api } from '../services/mockApi';
+import { useAuth } from '../contexts/AuthContext';
+import { ehSomenteLeitura } from '../constants/etapasCompetencia';
 
 /**
  * Rubricas descontinuadas (v4.52.8): aparecem no grid SOMENTE se a competência
@@ -65,7 +67,9 @@ const PayrollGridView: React.FC = () => {
     temAlteracoesNaoSalvas,
   } = usePayrollData();
 
-  const isCompAberta = selectedComp?.status === 'ABERTA';
+  const { user } = useAuth();
+  // Bem Vindo v1.4.0: perfis de consulta (leitura, contabilidade, diretor) não lançam nem marcam atestado
+  const isCompAberta = selectedComp?.status === 'ABERTA' && !ehSomenteLeitura(user?.perfil);
 
   // Eventos visíveis no grid: oculta rubricas descontinuadas que não têm lançamento na competência atual.
   const visibleEventos = useMemo(() => {
@@ -281,7 +285,7 @@ const PayrollGridView: React.FC = () => {
       <PayrollHeader
         totals={globalTotals}
         isSaving={isSaving}
-        isCompetenciaClosed={selectedComp?.status === 'FECHADA'}
+        isCompetenciaClosed={!isCompAberta}
         hasUnsavedChanges={temAlteracoesNaoSalvas}
         onSave={onSave}
       />

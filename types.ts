@@ -120,12 +120,27 @@ export interface EventoFolha {
   ativo?: number | boolean;  // Bem Vindo v1.2.0: 0 = desativada (fica fora do grid e da exportação)
 }
 
+/** Bem Vindo v1.4.0: etapas do fluxo da competência (só ABERTA permite lançar) */
+export type EtapaCompetencia = 'ABERTA' | 'EM_CONFERENCIA' | 'VALIDADA' | 'AUTORIZADA' | 'PAGA' | 'ENCERRADA';
+
 export interface Competencia {
   id: number;
   mes: number;
   ano: number;
   status: StatusCompetencia;
+  etapa?: EtapaCompetencia;  // Bem Vindo v1.4.0
   justificativa_status?: string;
+}
+
+/** Bem Vindo v1.4.0: GET /competencias/{id}/historico */
+export interface HistoricoEtapa {
+  id: number;
+  etapa_de: EtapaCompetencia;
+  etapa_para: EtapaCompetencia;
+  usuario_nome: string | null;
+  usuario_perfil: string | null;
+  observacao: string | null;
+  criado_em: string;
 }
 
 export interface Lancamento {
@@ -152,13 +167,13 @@ export interface Usuario {
   id: number;
   nome: string;
   email: string;
-  perfil: 'SUPERADMIN' | 'ADMIN' | 'RH' | 'LEITURA';
+  perfil: 'SUPERADMIN' | 'ADMIN' | 'RH' | 'LEITURA' | 'CONTABILIDADE' | 'DIRETOR';
   id_empresa: number;
 }
 
 // Interfaces adicionais para type safety
 
-export type UserPerfil = 'SUPERADMIN' | 'ADMIN' | 'RH' | 'COLABORADOR' | 'LEITURA';
+export type UserPerfil = 'SUPERADMIN' | 'ADMIN' | 'RH' | 'COLABORADOR' | 'LEITURA' | 'CONTABILIDADE' | 'DIRETOR'; // Bem Vindo v1.4.0: + CONTABILIDADE, DIRETOR
 
 export interface User {
   id: number;

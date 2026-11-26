@@ -212,11 +212,13 @@ const UsersView: React.FC = () => {
                       onChange={e => setFormData({ ...formData, perfil: e.target.value })}
                       disabled={formData.perfil === 'SUPERADMIN' && currentUser?.perfil !== 'SUPERADMIN'}
                     >
-                      <option value="RH">Recursos Humanos (Padrão)</option>
+                      <option value="RH">RH / Departamento Pessoal (Padrão)</option>
                       <option value="ADMIN">Administrador do Sistema</option>
                       {currentUser?.perfil === 'SUPERADMIN' && (
                         <option value="SUPERADMIN">Super Admin Master</option>
                       )}
+                      <option value="CONTABILIDADE">Contabilidade (consulta, exporta e valida a competência)</option>
+                      <option value="DIRETOR">Diretor (consulta e autoriza o pagamento)</option>
                       <option value="LEITURA">Somente Leitura</option>
                     </select>
                   </div>

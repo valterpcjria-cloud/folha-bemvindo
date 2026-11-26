@@ -93,7 +93,7 @@ const AppRoutes: React.FC = () => {
             </Route>
 
             {/* Admin Routes with Layout */}
-            <Route element={<ProtectedRoute allowedRoles={['ADMIN', 'SUPERADMIN', 'RH', 'LEITURA']} />}>
+            <Route element={<ProtectedRoute allowedRoles={['ADMIN', 'SUPERADMIN', 'RH', 'LEITURA', 'CONTABILIDADE', 'DIRETOR']} />}>
                 <Route element={<LayoutWrapper />}>
                     <Route element={<Suspense fallback={<ViewLoading />}><Outlet /></Suspense>}>
                         <Route path="/dashboard" element={<DashboardView />} />
