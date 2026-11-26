@@ -34,3 +34,7 @@ Status da auditoria: Deploys 1–3 + hotfix concluídos (v4.51.0 → v4.58.1). P
 - Empresa nova (`POST companies`) cria admin com senha temporária aleatória devolvida uma vez (modal `SenhaTemporariaModal`).
 - Dados de pagamento (banco/Pix) só para ADMIN/RH/SUPERADMIN (GET e gravação). `cargos` exige ADMIN/RH e filtra empresa.
 - CORS: `https://bemvindo.luzitec.cnt.br` + `APP_ORIGIN`. `.env` só na VPS (600). Apache com `mod_remoteip` atrás do Caddy.
+
+## Perfis e etapas (Bem Vindo v1.4.0)
+- Perfis: SUPERADMIN, ADMIN, RH (= DP), CONTABILIDADE, DIRETOR, LEITURA. Os três últimos só consultam (`PERFIS_SOMENTE_LEITURA`); cada um só mexe na sua etapa da competência via `POST /competencias/{id}/etapa`.
+- Toda rota que grava precisa de `requireRole($authUser, ['ADMIN','RH'])` (antes da v1.4.0 dependentes/férias não tinham). Dados bancários do funcionário só para SUPERADMIN/ADMIN/RH.

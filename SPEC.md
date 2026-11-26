@@ -1,7 +1,7 @@
 # SPEC.md — Sistema FOLHA BEM VINDO (fork da Folha Frimelo)
 ## Spec-Driven Development — Documento de Especificação Completa
 
-> **Versão do Documento:** v1.3.0 | **Data:** 2026-11-26
+> **Versão do Documento:** v1.4.0 | **Data:** 2026-11-26
 > **Propósito:** Registro permanente do estado arquitetural, regras de negócio, fluxos, banco de dados e decisões técnicas do sistema. Nenhuma IA ou desenvolvedor deve modificar este sistema sem antes ler e compreender este SPEC.
 > **Como ler:** a §0 descreve o que é próprio do Bem Vindo. As §1–§20 descrevem a base herdada da Frimelo (v4.58.1), que continua valendo para o código salvo onde a §0 diz o contrário (infraestrutura, deploy, nomes de domínio e empresas da Frimelo são só histórico).
 
@@ -12,7 +12,7 @@
 ### 0.1 Identidade
 **Nome:** Folha Bem Vindo · **Cliente:** Supermercado Bem Vindo (CNPJ 41.403.240/0001-14, Luziânia-GO, ~70 colaboradores)
 **Origem:** fork da Folha Frimelo v4.58.1 em 2026-11-17 (histórico do git recomeçado; numeração recomeça em 1.0.0)
-**Versão atual:** 1.3.0 · **Repositório:** `valterpcjria-cloud/folha-bemvindo` (privado)
+**Versão atual:** 1.4.0 · **Repositório:** `valterpcjria-cloud/folha-bemvindo` (privado)
 **Premissa:** a contabilidade (mesmo escritório da Frimelo) é a fonte oficial dos cálculos; o sistema faz a prévia e organiza os lançamentos por setor.
 
 ### 0.2 Infraestrutura (substitui §2.3 e §13)
@@ -35,6 +35,7 @@
 | `10_bv_setores_cargos_cadastro.sql` (v1.0.0) | Tabela `setores` (id_empresa, nome, ordem, ativo; 8 setores); `cargos` + `id_empresa`, `id_setor`, `ordem_hierarquia` (unique empresa+setor+nome); `funcionarios` + `id_setor`, `id_cargo`, `data_nascimento`, `sexo` (F/M/O), `escolaridade`, `modalidade_pagamento` (BANCO/PIX/LOJA), `banco`, `agencia`, `conta`, `tipo_conta`, `chave_pix` |
 | `11_bv_atestado_dias.sql` (v1.1.0) | `competencia_atestados.dias` TINYINT NULL |
 | `12_bv_padrao_insalubridade_zero.sql` (v1.1.0) | DEFAULT de `funcionarios.insalubridade_perc` e `assiduidade_perc` = 0.00 |
+| `14_bv_etapas_competencia.sql` (v1.4.0) | `competencias.etapa` (6 etapas); `competencia_etapas_historico`; `usuarios.perfil` + CONTABILIDADE, DIRETOR; `lancamentos_eventos.origem` + COPIA_COMPETENCIA |
 | `13_bv_rubricas_v120.sql` (v1.2.0) | `funcionarios` + `gratificacao_funcao_perc`, `vt_desconto_perc`, `vt_custo_mensal`; `eventos_folha` + 82, 37, 23, 816; 88 `ativo = 0`; `dsr_he_config_eventos` + 37 |
 
 Todas idempotentes e aditivas. PDO com `EMULATE_PREPARES=false`: parâmetro nomeado não pode se repetir na mesma query (HY093).
@@ -1059,6 +1060,7 @@ O sistema é multi-tenant com isolamento por `id_empresa`:
 
 | Versão | Data | Principais Mudanças |
 |--------|------|---------------------|
+| **BV 1.4.0** | 2026-11-26 | Competência em 6 etapas com histórico; perfis CONTABILIDADE e DIRETOR; trava de lançamento individual em comp fechada; abrir mês seguinte sem erro 500 |
 | **BV 1.3.0** | 2026-11-26 | Relatórios do DP (contabilidade, resumo por setor, pagamentos) em Excel/CSV/PDF, com o cálculo do grid (`calcularFolhaCompetencia`) |
 | **BV 1.2.0** | 2026-11-26 | Grat. de função 82 (%) no lugar da 88; HE 60% (37) com DSR; horas faltas (23); desconto VT 816 com teto; estagiário sem INSS/FGTS; faltas reduzem base do FGTS; cascata completa na edição |
 | **BV 1.1.0** | 2026-11-18 | Etiquetas nível/aniversário/admissão na matriz; atestado em dias; insalubridade/assiduidade padrão 0%; `POST /atestados` valida empresa e recusa competência fechada; backup diário do banco na VPS |
@@ -1103,14 +1105,15 @@ O sistema é multi-tenant com isolamento por `id_empresa`:
 
 ---
 
-## 20. PENDÊNCIAS E BACKLOG (atualizado 2026-11-26 — Folha Bem Vindo v1.3.0)
+## 20. PENDÊNCIAS E BACKLOG (atualizado 2026-11-26 — Folha Bem Vindo v1.4.0)
 
 | Item | Tipo | Observação |
 |------|------|-----------|
 | Rubricas e regras ainda pendentes (§0.6) | Cálculo | 2ª rodada enviada em 26/11/2026 (escritório E1–E15, Bem Vindo B1–B12) |
 | Fechamento Expresso (`FechamentoService`) | Cálculo | Herdado; não deduz faltas nem trata estagiário — alinhar se for usado |
 | Fase B: adiantamentos (vale dia 21, convênios compras/farmácia), saldo a pagar, pagamento banco/Pix/loja + conferência | Funcionalidade | Depende da P24 (contracheque × controle interno) |
-| Status da competência em 6 etapas + perfis DP/contabilidade/diretor | Funcionalidade | Do documento de requisitos |
+| Status da competência em 6 etapas + perfis DP/contabilidade/diretor | Funcionalidade | ✅ v1.4.0 (`lib/EtapasCompetencia.php`, `constants/etapasCompetencia.ts`) |
+| Dependentes/férias: DELETE sem filtro de empresa; feriados DELETE mistura `?` e `:is_super` (HY093) | Segurança/bug | Herdado da Frimelo; entra na limpeza v1.5.1 |
 | Relatórios: contabilidade, resumo por setor e pagamentos | Funcionalidade | ✅ v1.3.0 (`views/reports/`); validar com dados reais. Faltam prestação ao diretor e planejado × autorizado × pago (Fase B) |
 | Retorno oficial da contabilidade e divergências | Funcionalidade | Depende da P26 |
 | DNS `bemvindo.luzitec.cnt.br` | Infra | ✅ No ar desde 2026-11-26 (HTTPS Let's Encrypt OK) |
@@ -1123,4 +1126,4 @@ O sistema é multi-tenant com isolamento por `id_empresa`:
 
 ---
 
-*Este documento foi atualizado em 2026-11-26. Versão atual: FOLHA BEM VINDO v1.3.0 (base Frimelo v4.58.1).*
+*Este documento foi atualizado em 2026-11-26. Versão atual: FOLHA BEM VINDO v1.4.0 (base Frimelo v4.58.1).*

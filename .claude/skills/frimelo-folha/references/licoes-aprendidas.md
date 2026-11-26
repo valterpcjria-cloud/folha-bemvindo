@@ -40,3 +40,5 @@ Tabela histórica completa: `SPEC.md` §16. Ao descobrir uma nova, registre aqui
 - Quando o Valter some no meio do trabalho: salvar ponto de parada na memória, não subir nada, deixar resumo do que ele precisa fazer.
 - **BV:** antes de implementar coluna/regra do protótipo, conferir se ela depende de pergunta enviada à contabilidade (P1–P30); se depender, esperar.
 - **BV:** testar a restauração do backup, não só a criação.
+| **BV** Abrir o 2º mês daria 500 | `origem = 'COPIA_COMPETENCIA'` fora do ENUM; MariaDB com STRICT_TRANS_TABLES | ENUM ampliado na migration 14 (v1.4.0). Valor novo em coluna ENUM = migration |
+| **BV** Lançamento gravado em competência fechada | Só o `saveBulk` checava o status | `saveSingle` também recusa (409) desde v1.4.0 |

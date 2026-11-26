@@ -3,6 +3,25 @@
 Fork da Folha Frimelo (base v4.58.1) para o Supermercado Bem Vindo. A numeração recomeça em 1.0.0.
 O histórico da Frimelo continua abaixo, a partir de [4.58.1].
 
+## [1.4.0] - 2026-11-26
+
+Competência em 6 etapas e perfis da contabilidade e do diretor (documento de requisitos).
+
+### Adicionado
+- **Etapas da competência**: Aberta → Em conferência → Validada → Autorizada → Paga → Encerrada. Só a Aberta aceita lançamentos. Avança só para a etapa seguinte, pelo perfil responsável (DP envia, Contabilidade valida, Diretor autoriza, DP marca paga e encerra; Admin faz qualquer uma). **Devolver para aberta** exige justificativa; de Paga/Encerrada só o Admin devolve.
+- **Histórico** de cada competência: quem mudou a etapa, quando e o motivo.
+- **Perfis CONTABILIDADE** (consulta, exporta e valida) e **DIRETOR** (consulta e autoriza o pagamento). Perfis de consulta veem o grid sem poder lançar; dados bancários continuam só para ADMIN e RH.
+- API: `POST /competencias/{id}/etapa` `{para, observacao}` e `GET /competencias/{id}/historico`. `close`/`reopen` seguem as mesmas regras.
+
+### Corrigido (herdado da Frimelo)
+- Salvar um lançamento por vez gravava em competência fechada (só o lote recusava). Agora responde 409.
+- Abrir a competência seguinte a um mês fechado dava erro 500 (`origem = 'COPIA_COMPETENCIA'` não existia na coluna).
+- Dependentes e férias aceitavam gravação de qualquer perfil autenticado: agora só ADMIN/RH.
+- Atestados e feriados: consulta liberada aos perfis de consulta (a Assiduidade e o relatório da contabilidade dependem dos atestados).
+
+### Banco de Dados
+- `docker/banco/14_bv_etapas_competencia.sql`: `competencias.etapa`, tabela `competencia_etapas_historico`, perfis `CONTABILIDADE`/`DIRETOR` em `usuarios.perfil`, `COPIA_COMPETENCIA` em `lancamentos_eventos.origem`. Competência já fechada vira ENCERRADA. Idempotente; rodar antes de trocar a imagem.
+
 ## [1.3.0] - 2026-11-26
 
 Relatórios do DP (documento de requisitos, saídas 2, 4 e 5), com os mesmos valores da tela de Lançamentos. Sem mudança no banco.

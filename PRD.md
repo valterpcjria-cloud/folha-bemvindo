@@ -1,7 +1,7 @@
 # PRD — Product Requirements Document
 ## Sistema FOLHA BEM VINDO — Folha de Pagamento do Supermercado Bem Vindo (fork da Folha Frimelo)
 
-> **Versão:** 3.1 | **Data:** 2026-11-26 | **Status:** Em implantação — v1.3.0 no ar em https://bemvindo.luzitec.cnt.br (aguardando a 2ª rodada de respostas; ainda sem uso real)
+> **Versão:** 3.1 | **Data:** 2026-11-26 | **Status:** Em implantação — v1.4.0 no ar em https://bemvindo.luzitec.cnt.br (aguardando a 2ª rodada de respostas; ainda sem uso real)
 > **Proprietário do Produto:** Valter (operador/implantador) · **Cliente:** Supermercado Bem Vindo (Luziânia-GO)
 > **Responsável Técnico:** Claude Code / Antigravity
 > **Como ler:** a §0 é o produto Bem Vindo. As §1–§13 descrevem a base herdada da Frimelo, que o Bem Vindo aproveita ("não fugir da base do sistema existente; acrescentar o que eles pediram").
@@ -30,6 +30,7 @@
 | — | Marca Bem Vindo, Docker na VPS, backup diário | ✅ v1.0.0 / v1.1.0 |
 | A.3 | Etiquetas do protótipo (nível, aniversário, admissão) e atestado em dias; padrão de insalubridade 0% | ✅ v1.1.0 |
 | A.4 | Rubricas confirmadas: gratificação de função 82, HE 60% 37, horas faltas 23, desconto VT 816, estagiário sem INSS/FGTS (sem adicional noturno: P16) | ✅ v1.2.0 |
+| B.1 | Status da competência em 6 etapas com histórico; perfis CONTABILIDADE e DIRETOR | ✅ v1.4.0 |
 | A.6 | Relatórios: para a contabilidade (Excel/CSV/PDF), resumo por setor e relação de pagamentos por modalidade | ✅ v1.3.0 |
 | A.5 | Rubricas pendentes (quebra de caixa, produtividade, auxílios, suspensão, salário-família...) + relatório para contabilidade | ⏳ 2ª rodada |
 | B | Adiantamentos (vale dia 21, convênios), saldo, pagamentos banco/Pix/loja, prestação ao diretor, status em 6 etapas, perfis DP/contabilidade/diretor | ⏳ depende da P24 |
