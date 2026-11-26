@@ -80,8 +80,10 @@ class LancamentoService
 
                 $insalubVal = $insalubridades[$item['funcionario_id']] ?? 0;
                 $faltasVal  = $faltasValues[$item['funcionario_id']] ?? 0;
-                $gratVal    = $gratificacoes[$item['funcionario_id']] ?? 0;
-                $processed  = $this->calculateEventValue($item, $salaries[$item['funcionario_id']] ?? 0, $insalubVal, $faltasVal, $gratVal);
+                $salVal     = $salaries[$item['funcionario_id']] ?? 0;
+                // Bem Vindo v1.2.0: gratificação de função (82) = % do cadastro × salário
+                $gratVal    = round($salVal * ($gratificacoes[$item['funcionario_id']] ?? 0) / 100, 2);
+                $processed  = $this->calculateEventValue($item, $salVal, $insalubVal, $faltasVal, $gratVal);
 
                 $stmt->execute([
                     $item['funcionario_id'],
@@ -120,7 +122,7 @@ class LancamentoService
         $salary     = $this->getSalaryForEmployee((int)$data['funcionario_id'], $comp_id, $empresaId);
         $insalubSingle = $this->getEventValueForEmployee((int)$data['funcionario_id'], $comp_id, $empresaId, PayrollConstants::EVENT_CODES['INSALUBRIDADE']);
         $faltasSingle  = $this->getEventValueForEmployee((int)$data['funcionario_id'], $comp_id, $empresaId, PayrollConstants::EVENT_CODES['FALTAS']);
-        $gratSingle    = $this->getGratificacaoForEmployee((int)$data['funcionario_id'], $empresaId);
+        $gratSingle    = round($salary * $this->getGratificacaoForEmployee((int)$data['funcionario_id'], $empresaId) / 100, 2);
         $processed  = $this->calculateEventValue($data, $salary, $insalubSingle, $faltasSingle, $gratSingle);
 
         $sql = "INSERT INTO lancamentos_eventos (funcionario_id, competencia_id, evento_id, quantidade, valor_unitario, valor_total, id_empresa, origem)
@@ -229,7 +231,8 @@ class LancamentoService
     }
 
     /**
-     * Resolve gratificações para um conjunto de dados (otimizado para bulk).
+     * Resolve o % de gratificação de função (82) por funcionário (otimizado para bulk).
+     * Bem Vindo v1.2.0: era o valor R$ da Gratificação 88 (Frimelo); agora é o % do cadastro.
      */
     private function resolveGratificacoes(array $data, int $empresaId): array
     {
@@ -238,17 +241,17 @@ class LancamentoService
         if (empty($funcIds)) return $gratificacoes;
 
         $placeholders = implode(',', array_fill(0, count($funcIds), '?'));
-        $stmt = $this->conn->prepare("SELECT id, gratificacao FROM funcionarios WHERE id IN ($placeholders) AND id_empresa = ?");
+        $stmt = $this->conn->prepare("SELECT id, gratificacao_funcao_perc FROM funcionarios WHERE id IN ($placeholders) AND id_empresa = ?");
         $stmt->execute(array_merge(array_values($funcIds), [$empresaId]));
         while ($row = $stmt->fetch()) {
-            $gratificacoes[$row['id']] = (float)($row['gratificacao'] ?? 0.00);
+            $gratificacoes[$row['id']] = (float)($row['gratificacao_funcao_perc'] ?? 0.00);
         }
         return $gratificacoes;
     }
 
     private function getGratificacaoForEmployee(int $funcId, int $empresaId): float
     {
-        $stmt = $this->conn->prepare("SELECT gratificacao FROM funcionarios WHERE id = ? AND id_empresa = ?");
+        $stmt = $this->conn->prepare("SELECT gratificacao_funcao_perc FROM funcionarios WHERE id = ? AND id_empresa = ?");
         $stmt->execute([$funcId, $empresaId]);
         return (float)($stmt->fetchColumn() ?: 0.00);
     }
@@ -357,11 +360,12 @@ class LancamentoService
             ];
         }
 
-        // Rubrica 88 (Gratificação): força valor_total = gratificacao do cadastro.
-        if ($code === PayrollConstants::EVENT_CODES['GRATIFICACAO']) {
+        // Bem Vindo v1.2.0: Gratificação de função (82) — força o valor do cadastro (% × salário).
+        // (A Gratificação 88 da Frimelo está desativada no Bem Vindo.)
+        if ($code === PayrollConstants::EVENT_CODES['GRATIFICACAO_FUNCAO']) {
             return [
-                'quantidade' => 0,
-                'valor_unitario' => $gratificacao,
+                'quantidade' => $baseSalary > 0 ? round($gratificacao * 100 / $baseSalary, 2) : 0,
+                'valor_unitario' => $baseSalary / 100,
                 'valor_total' => round($gratificacao, 2)
             ];
         }
@@ -369,6 +373,8 @@ class LancamentoService
         // Se já vier com valor total e não for um evento de auto-cálculo manual, mantém
         if ($valTotal > 0 && !in_array($code, [
             PayrollConstants::EVENT_CODES['HORAS_EXTRAS_100'],
+            PayrollConstants::EVENT_CODES['HORAS_EXTRAS_60'],
+            PayrollConstants::EVENT_CODES['HORAS_FALTAS'],
             PayrollConstants::EVENT_CODES['FERIADO_TRABALHADO'],
             PayrollConstants::EVENT_CODES['FALTAS'],
             PayrollConstants::EVENT_CODES['INSALUBRIDADE'],
@@ -379,10 +385,23 @@ class LancamentoService
 
         switch ($code) {
             case PayrollConstants::EVENT_CODES['HORAS_EXTRAS_100']:
-                // Base HE = Salário (33) + Gratificação (88) + Insalubridade (62) — v4.54.1
+            case PayrollConstants::EVENT_CODES['HORAS_EXTRAS_60']:
+                // Base HE = Salário (33) + Gratificação de função (82) + Insalubridade (62)
+                // HE 100% (49) × 2; Bem Vindo v1.2.0: HE 60% (37) × 1,6
                 $baseHE = $baseSalary + $gratificacao + $insalubridade;
+                $mult = $code === PayrollConstants::EVENT_CODES['HORAS_EXTRAS_60']
+                    ? PayrollConstants::OVERTIME_60_MULTIPLIER
+                    : PayrollConstants::OVERTIME_100_MULTIPLIER;
                 if ($baseHE > 0 && $qtd > 0) {
-                    $valUnit = ($baseHE / PayrollConstants::MONTHLY_WORKING_HOURS) * PayrollConstants::OVERTIME_100_MULTIPLIER;
+                    $valUnit = ($baseHE / PayrollConstants::MONTHLY_WORKING_HOURS) * $mult;
+                    $valTotal = round($qtd * $valUnit, 2);
+                }
+                break;
+
+            case PayrollConstants::EVENT_CODES['HORAS_FALTAS']:
+                // Bem Vindo v1.2.0: horas faltas (23) = salário ÷ 220 × horas (P13)
+                if ($baseSalary > 0 && $qtd > 0) {
+                    $valUnit = $baseSalary / PayrollConstants::MONTHLY_WORKING_HOURS;
                     $valTotal = round($qtd * $valUnit, 2);
                 }
                 break;

@@ -10,6 +10,7 @@ class PayrollConstants
     const MONTHLY_WORKING_HOURS = 220;
     
     const OVERTIME_50_MULTIPLIER = 1.5;
+    const OVERTIME_60_MULTIPLIER = 1.6; // Bem Vindo v1.2.0: HE 60% (37)
     const OVERTIME_100_MULTIPLIER = 2.0;
 
     const SALARIO_MINIMO_2026 = 1621.00;
@@ -27,6 +28,11 @@ class PayrollConstants
         'INSS' => 35,
         'IRRF' => 1920,
         'FGTS_VISUAL' => 1900,
-        'GRATIFICACAO' => 88,
+        'GRATIFICACAO' => 88,            // Frimelo — desativada no Bem Vindo (v1.2.0)
+        // Bem Vindo v1.2.0 (códigos do Questor)
+        'GRATIFICACAO_FUNCAO' => 82,
+        'HORAS_EXTRAS_60' => 37,
+        'HORAS_FALTAS' => 23,
+        'VT_DESCONTO' => 816,
     ];
 }

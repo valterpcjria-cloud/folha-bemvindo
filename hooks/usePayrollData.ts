@@ -6,9 +6,10 @@
 import { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import { Funcionario, EventoFolha, Competencia, Lancamento, Unidade, StatusCompetencia, StatusFuncionario } from '../types';
 import { api } from '../services/mockApi';
-import { MONTHLY_WORKING_HOURS, OVERTIME_100_MULTIPLIER, EVENT_CODES, SALARIO_MINIMO_2026, DSR_HE_CONFIG } from '../constants/payroll';
+import { MONTHLY_WORKING_HOURS, OVERTIME_100_MULTIPLIER, OVERTIME_60_MULTIPLIER, EVENT_CODES, SALARIO_MINIMO_2026, DSR_HE_CONFIG } from '../constants/payroll';
 import { useAuth } from '../contexts/AuthContext';
 import { calcularINSS, calcularIRRF, calcularBaseIncidencia, calcularFGTS } from '../utils/taxCalculations';
+import { valorDescontoFaltas, isEstagiario, recalcularHorasFaltasTodos, recalcularValeTransporteTodos } from './payrollBemVindo';
 import { MENSAGEM_ALTERACOES_NAO_SALVAS, setAlteracoesPendentes, confirmarDescarteAlteracoes, registrarSalvamento } from '../utils/unsavedChanges';
 
 export interface PayrollTotals {
@@ -192,7 +193,8 @@ function recalcularDsrHeTodos(
 function recalcularINSSPara(
     lancamentos: Record<string, Partial<Lancamento>>,
     eventos: EventoFolha[],
-    funcionarioId: number
+    funcionarioId: number,
+    semINSS: boolean = false // Bem Vindo v1.2.0: estagiário não tem INSS (P20)
 ): Record<string, Partial<Lancamento>> {
     const inssEvent = eventos.find(e => e.codigo_evento === EVENT_CODES.INSS);
     if (!inssEvent) return lancamentos;
@@ -204,15 +206,11 @@ function recalcularINSSPara(
         const lanc = lancamentos[`${funcionarioId}_${ev.id}`];
         baseINSS += Number(lanc?.valor_total || 0);
     }
-    // Deduz Faltas (71) da base INSS — desconto já reflete dias não trabalhados
-    const faltasEvent = eventos.find(e => e.codigo_evento === EVENT_CODES.FALTAS);
-    if (faltasEvent) {
-        const faltasVal = Number(lancamentos[`${funcionarioId}_${faltasEvent.id}`]?.valor_total || 0);
-        baseINSS = Math.max(0, baseINSS - faltasVal);
-    }
+    // Deduz Faltas (71) + Horas faltas (23, Bem Vindo v1.2.0) da base INSS
+    baseINSS = Math.max(0, baseINSS - valorDescontoFaltas(lancamentos, eventos, funcionarioId));
 
     const inssKey = `${funcionarioId}_${inssEvent.id}`;
-    if (baseINSS <= 0) {
+    if (baseINSS <= 0 || semINSS) {
         // Sem proventos: zera INSS (ou remove o lançamento)
         return {
             ...lancamentos,
@@ -242,7 +240,8 @@ function recalcularINSSPara(
 /** Recalcula INSS para todos os funcionários presentes no estado de lançamentos. */
 function recalcularINSSTodos(
     lancamentos: Record<string, Partial<Lancamento>>,
-    eventos: EventoFolha[]
+    eventos: EventoFolha[],
+    funcionarios: Funcionario[] = []
 ): Record<string, Partial<Lancamento>> {
     const funcIds = new Set<number>();
     Object.keys(lancamentos).forEach(k => {
@@ -252,7 +251,7 @@ function recalcularINSSTodos(
 
     let result = lancamentos;
     funcIds.forEach(fid => {
-        result = recalcularINSSPara(result, eventos, fid);
+        result = recalcularINSSPara(result, eventos, fid, isEstagiario(funcionarios, fid));
     });
     return result;
 }
@@ -282,12 +281,8 @@ function recalcularIRRFPara(
         baseProventos += Number(lanc?.valor_total || 0);
     }
 
-    // Deduz Faltas (71) da base IRRF — dias não trabalhados reduzem o tributável
-    const faltasEvIRRF = eventos.find(e => e.codigo_evento === EVENT_CODES.FALTAS);
-    if (faltasEvIRRF) {
-        const faltasVal = Number(lancamentos[`${funcionarioId}_${faltasEvIRRF.id}`]?.valor_total || 0);
-        baseProventos = Math.max(0, baseProventos - faltasVal);
-    }
+    // Deduz Faltas (71) + Horas faltas (23, Bem Vindo v1.2.0) da base IRRF
+    baseProventos = Math.max(0, baseProventos - valorDescontoFaltas(lancamentos, eventos, funcionarioId));
 
     // INSS já calculado — passado ao calcularIRRF como dedução separada (redutor usa RTM)
     const inssEvent = eventos.find(e => e.codigo_evento === EVENT_CODES.INSS);
@@ -351,7 +346,8 @@ function recalcularIRRFTodos(
  */
 function recalcularFGTSTodos(
     lancamentos: Record<string, Partial<Lancamento>>,
-    eventos: EventoFolha[]
+    eventos: EventoFolha[],
+    funcionarios: Funcionario[] = []
 ): Record<string, Partial<Lancamento>> {
     const fgtsVisualEvent = eventos.find(e => e.codigo_evento === EVENT_CODES.FGTS_VISUAL);
     if (!fgtsVisualEvent) return lancamentos;
@@ -369,7 +365,10 @@ function recalcularFGTSTodos(
             .filter(k => k.startsWith(`${fid}_`))
             .map(k => result[k]);
 
-        const baseFGTS = calcularBaseIncidencia(empLancs, eventos, 'fgts');
+        // Bem Vindo v1.2.0: faltas (71) e horas faltas (23) reduzem a base; estagiário não tem FGTS (P20)
+        const baseFGTS = isEstagiario(funcionarios, fid)
+            ? 0
+            : Math.max(0, calcularBaseIncidencia(empLancs, eventos, 'fgts') - valorDescontoFaltas(result, eventos, fid));
         const fgtsVal = calcularFGTS(baseFGTS);
 
         const key = `${fid}_${fgtsVisualEvent.id}`;
@@ -467,7 +466,8 @@ function aplicarRubricasCadastroFuncionarios(
     const adicTSEvent  = eventos.find(e => e.codigo_evento === EVENT_CODES.ADICIONAL_TEMPO_SERVICO);
     const mensSindEvent = eventos.find(e => e.codigo_evento === EVENT_CODES.MENSALIDADE_SINDICAL);
     const emprestimoEvent = eventos.find(e => e.codigo_evento === EVENT_CODES.EMPRESTIMO_CONSIGNADO);
-    const gratificacaoEvent = eventos.find(e => e.codigo_evento === EVENT_CODES.GRATIFICACAO);
+    const gratFuncaoEvent = eventos.find(e => e.codigo_evento === EVENT_CODES.GRATIFICACAO_FUNCAO);
+    const vtEvent = eventos.find(e => e.codigo_evento === EVENT_CODES.VT_DESCONTO);
 
     const result = { ...lancamentos };
     funcionarios.forEach(f => {
@@ -536,18 +536,17 @@ function aplicarRubricasCadastroFuncionarios(
             };
         }
 
-        // Gratificação (88): valor fixo em R$
-        if (gratificacaoEvent) {
-            const val = Number(f.gratificacao ?? 0);
-            const key = `${f.id}_${gratificacaoEvent.id}`;
-            result[key] = {
-                funcionario_id: f.id,
-                evento_id: gratificacaoEvent.id,
-                quantidade: 0,
-                valor_unitario: val,
-                valor_total: val,
-            };
-        }
+        // Bem Vindo v1.2.0: Gratificação de função (82) e desconto do VT (816) — % do cadastro;
+        // o valor é calculado na cascata. (A Gratificação 88 da Frimelo não é usada no Bem Vindo.)
+        const percCadastro: Array<[EventoFolha | undefined, number]> = [
+            [gratFuncaoEvent, Number(f.gratificacao_funcao_perc ?? 0)],
+            [vtEvent, Number(f.vt_desconto_perc ?? 0)],
+        ];
+        percCadastro.forEach(([ev, perc]) => {
+            if (!ev) return;
+            const key = `${f.id}_${ev.id}`;
+            result[key] = { ...(result[key] || {}), funcionario_id: f.id, evento_id: ev.id, quantidade: perc };
+        });
     });
     return result;
 }
@@ -658,9 +657,9 @@ function recalcularAdicionalTempoServicoTodos(
 }
 
 /**
- * Base da HE 100% (49) = Salário (33) + Gratificação (88) + Insalubridade (62).
+ * Base da HE (49 e 37) = Salário (33) + Gratificação de função (82) + Insalubridade (62).
  * `insalubOverride` permite usar o valor recém-recalculado da insalubridade nas cascatas.
- * v4.54.1: Gratificação (88) passa a compor a base.
+ * v4.54.1: Gratificação passa a compor a base. Bem Vindo v1.2.0: a gratificação é a 82 (não a 88).
  */
 function calcBaseHE(
     lancamentos: Record<string, Partial<Lancamento>>,
@@ -673,18 +672,20 @@ function calcBaseHE(
         return ev ? Number(lancamentos[`${funcId}_${ev.id}`]?.valor_total || 0) : 0;
     };
     const insalubVal = insalubOverride ?? valorRubrica(EVENT_CODES.INSALUBRIDADE);
-    return valorRubrica(EVENT_CODES.SALARIO) + valorRubrica(EVENT_CODES.GRATIFICACAO) + insalubVal;
+    return valorRubrica(EVENT_CODES.SALARIO) + valorRubrica(EVENT_CODES.GRATIFICACAO_FUNCAO) + insalubVal;
 }
 
 /**
- * Recalcula HE 100% (código 49) para todos os funcionários usando Salário (33) + Gratificação (88) + Insalubridade (62).
- * Chamado após carregar dados do banco, para corrigir valores salvos antes da lógica de insalubridade.
+ * Recalcula uma rubrica de HE para todos os funcionários: base (calcBaseHE) ÷ 220 × multiplicador × horas.
+ * Padrão: HE 100% (49, ×2). Bem Vindo v1.2.0: também HE 60% (37, ×1,6).
  */
 function recalcularHETodos(
     lancamentos: Record<string, Partial<Lancamento>>,
-    eventos: EventoFolha[]
+    eventos: EventoFolha[],
+    codigoHE: number = EVENT_CODES.HORAS_EXTRAS_100,
+    multiplicador: number = OVERTIME_100_MULTIPLIER
 ): Record<string, Partial<Lancamento>> {
-    const heEvent = eventos.find(e => e.codigo_evento === EVENT_CODES.HORAS_EXTRAS_100);
+    const heEvent = eventos.find(e => e.codigo_evento === codigoHE);
     const salaryEvent = eventos.find(e => e.codigo_evento === EVENT_CODES.SALARIO);
     if (!heEvent || !salaryEvent) return lancamentos;
 
@@ -698,7 +699,7 @@ function recalcularHETodos(
         const baseHE = calcBaseHE(lancamentos, eventos, funcId);
         if (baseHE <= 0) return;
         // Sempre recalcula valor_unitario (corrige base stale independente de qty)
-        const newValUnit = (baseHE / MONTHLY_WORKING_HOURS) * OVERTIME_100_MULTIPLIER;
+        const newValUnit = (baseHE / MONTHLY_WORKING_HOURS) * multiplicador;
         const newValTotal = Math.round((heQtd * newValUnit) * 100) / 100;
         result[k] = { ...heData, valor_unitario: newValUnit, valor_total: newValTotal };
     });
@@ -707,7 +708,7 @@ function recalcularHETodos(
 
 /**
  * Executa a cascata COMPLETA de recálculo da folha, na ordem correta:
- * Assiduidade → AdicTempoServiço → Insalubridade → HE → DSR → INSS → IRRF → FGTS.
+ * Assiduidade → AdicTempoServiço → Grat.Função → Insalubridade → HorasFaltas → HE 100%/60% → DSR → VT → INSS → IRRF → FGTS.
  * Centraliza a cadeia que antes era duplicada em init/handleCompChange/save/toggle.
  * v4.54.0.
  *
@@ -725,30 +726,21 @@ function recalcularCascataCompleta(
     competenciaAberta: boolean = true
 ): Record<string, Partial<Lancamento>> {
     if (!competenciaAberta) {
-        return recalcularFGTSTodos(recalcularDsrHeTodos(lancamentos, eventos, diasUteis, diasDsr), eventos);
+        return recalcularFGTSTodos(recalcularDsrHeTodos(lancamentos, eventos, diasUteis, diasDsr), eventos, funcionarios);
     }
-    return recalcularFGTSTodos(
-        recalcularIRRFTodos(
-            recalcularINSSTodos(
-                recalcularDsrHeTodos(
-                    recalcularHETodos(
-                        recalcularInsalubridadeTodos(
-                            recalcularAdicionalTempoServicoTodos(
-                                recalcularAssiduidadeTodos(lancamentos, eventos, atestados),
-                                eventos
-                            ),
-                            eventos
-                        ),
-                        eventos
-                    ), eventos,
-                    diasUteis, diasDsr
-                ),
-                eventos
-            ),
-            eventos, funcionarios
-        ),
-        eventos
-    );
+    // Bem Vindo v1.2.0: + Gratificação de função (82), Horas faltas (23), HE 60% (37) e desconto do VT (816)
+    let r = recalcularAssiduidadeTodos(lancamentos, eventos, atestados);
+    r = recalcularAdicionalTempoServicoTodos(r, eventos);
+    r = recalcularPercentualSobreSalarioTodos(r, eventos, EVENT_CODES.GRATIFICACAO_FUNCAO);
+    r = recalcularInsalubridadeTodos(r, eventos);
+    r = recalcularHorasFaltasTodos(r, eventos);
+    r = recalcularHETodos(r, eventos, EVENT_CODES.HORAS_EXTRAS_100, OVERTIME_100_MULTIPLIER);
+    r = recalcularHETodos(r, eventos, EVENT_CODES.HORAS_EXTRAS_60, OVERTIME_60_MULTIPLIER);
+    r = recalcularDsrHeTodos(r, eventos, diasUteis, diasDsr);
+    r = recalcularValeTransporteTodos(r, eventos, funcionarios);
+    r = recalcularINSSTodos(r, eventos, funcionarios);
+    r = recalcularIRRFTodos(r, eventos, funcionarios);
+    return recalcularFGTSTodos(r, eventos, funcionarios);
 }
 
 /**
@@ -817,7 +809,8 @@ export const usePayrollData = () => {
                 setFeriados(ferList);
 
                 // Ordenar eventos por ordem de exportação
-                let sortedEvs = [...evs].sort((a, b) => (a.ordem_exportacao || 0) - (b.ordem_exportacao || 0));
+                // Bem Vindo v1.2.0: rubrica desativada (ex.: Gratificação 88) não aparece no grid
+                let sortedEvs = evs.filter(e => e.ativo === undefined || Number(e.ativo) !== 0).sort((a, b) => (a.ordem_exportacao || 0) - (b.ordem_exportacao || 0));
 
                 // v4.53.0: Forçar IRRF (1920) logo após o INSS (35)
                 const irrfIdx = sortedEvs.findIndex(e => Number(e.codigo_evento) === 1920);
@@ -946,6 +939,7 @@ export const usePayrollData = () => {
             EVENT_CODES.INSALUBRIDADE, EVENT_CODES.ASSIDUIDADE, EVENT_CODES.ADICIONAL_TEMPO_SERVICO,
             EVENT_CODES.MENSALIDADE_SINDICAL, EVENT_CODES.EMPRESTIMO_CONSIGNADO,
             EVENT_CODES.FGTS_VISUAL, EVENT_CODES.GRATIFICACAO,
+            EVENT_CODES.GRATIFICACAO_FUNCAO, EVENT_CODES.VT_DESCONTO, // Bem Vindo v1.2.0: % no cadastro
         ];
         if (eventBeingEdited && lockedCodes.includes(eventBeingEdited.codigo_evento)) {
             return; // Ignora silenciosamente; UI deve bloquear o input
@@ -1019,130 +1013,13 @@ export const usePayrollData = () => {
                 updated.valor_total = Math.round((updated.quantidade * updated.valor_unitario) * 100) / 100;
             }
 
-            // CASCADE: Faltas mudou → recalcula Insalubridade → HE → DSR em cascata
-            const cascadeUpdates: Record<string, Partial<Lancamento>> = {};
-            if (event?.codigo_evento === EVENT_CODES.FALTAS) {
-                // v4.54.0: Faltas preenchidas → funcionário PERDE Assiduidade (833).
-                // Se zerou as faltas (e não há atestado) → Assiduidade volta ao normal.
-                const assidEvent  = eventos.find(e => e.codigo_evento === EVENT_CODES.ASSIDUIDADE);
-                const salaryEvt   = eventos.find(e => e.codigo_evento === EVENT_CODES.SALARIO);
-                if (assidEvent) {
-                    const assidKey  = `${funcionarioId}_${assidEvent.id}`;
-                    const assidData = prev[assidKey];
-                    const assidQtd  = Number(assidData?.quantidade || 0);
-                    const temFaltas = Number(updated.quantidade || 0) > 0 || Number(updated.valor_total || 0) > 0;
-                    const temAtestado = atestados.has(funcionarioId);
-                    if (temFaltas || temAtestado) {
-                        cascadeUpdates[assidKey] = { ...assidData, funcionario_id: funcionarioId, evento_id: assidEvent.id, valor_total: 0 };
-                    } else if (assidQtd > 0 && salaryEvt) {
-                        const salaryVal = Number(prev[`${funcionarioId}_${salaryEvt.id}`]?.valor_total || 0);
-                        const unit = salaryVal / 100;
-                        cascadeUpdates[assidKey] = { ...assidData, funcionario_id: funcionarioId, evento_id: assidEvent.id, valor_unitario: unit, valor_total: Math.round((assidQtd * unit) * 100) / 100 };
-                    }
-                }
-
-                const insalubEvent = eventos.find(e => e.codigo_evento === EVENT_CODES.INSALUBRIDADE);
-                const heEvent      = eventos.find(e => e.codigo_evento === EVENT_CODES.HORAS_EXTRAS_100);
-                const salaryEvent  = eventos.find(e => e.codigo_evento === EVENT_CODES.SALARIO);
-                const dsrEvt       = eventos.find(e => e.codigo_evento === EVENT_CODES.DSR_HE_DIURNAS);
-                if (insalubEvent) {
-                    const insalubKey  = `${funcionarioId}_${insalubEvent.id}`;
-                    const insalubData = prev[insalubKey];
-                    const insalubQtd  = insalubData?.quantidade || 0;
-                    if (insalubQtd > 0) {
-                        // Insalubridade: base = SalMin − novo valor das faltas
-                        const newFaltasVal    = updated.valor_total;
-                        const newBaseInsalub  = Math.max(0, SALARIO_MINIMO_2026 - newFaltasVal);
-                        const newInsalubUnit  = newBaseInsalub / 100;
-                        const newInsalubTotal = Math.round((insalubQtd * newInsalubUnit) * 100) / 100;
-                        cascadeUpdates[insalubKey] = { ...insalubData, valor_unitario: newInsalubUnit, valor_total: newInsalubTotal };
-
-                        // Cascata: nova insalubridade → HE 100%
-                        if (heEvent && salaryEvent) {
-                            const heKey   = `${funcionarioId}_${heEvent.id}`;
-                            const heData  = prev[heKey];
-                            const heQtd   = heData?.quantidade || 0;
-                            if (heQtd > 0) {
-                                const newBaseHE   = calcBaseHE(prev, eventos, funcionarioId, newInsalubTotal);
-                                if (newBaseHE > 0) {
-                                    const newHeUnit  = (newBaseHE / MONTHLY_WORKING_HOURS) * OVERTIME_100_MULTIPLIER;
-                                    const newHeTotal = Math.round((heQtd * newHeUnit) * 100) / 100;
-                                    cascadeUpdates[heKey] = { ...heData, valor_unitario: newHeUnit, valor_total: newHeTotal };
-                                    // Cascata: nova HE → DSR
-                                    if (dsrEvt && diasCalendario.dias_uteis > 0 && diasCalendario.dias_dsr > 0) {
-                                        const dsrKey = `${funcionarioId}_${dsrEvt.id}`;
-                                        const newDsr = Math.round(((newHeTotal / diasCalendario.dias_uteis) * diasCalendario.dias_dsr) * 100) / 100;
-                                        cascadeUpdates[dsrKey] = { funcionario_id: funcionarioId, evento_id: dsrEvt.id, quantidade: 0, valor_unitario: 0, valor_total: newDsr };
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-
-            // CASCADE: Insalubridade mudou → recalcula HE 100% e DSR para este funcionário em tempo real
-            if (event?.codigo_evento === EVENT_CODES.INSALUBRIDADE) {
-                const heEvent = eventos.find(e => e.codigo_evento === EVENT_CODES.HORAS_EXTRAS_100);
-                const salaryEvent = eventos.find(e => e.codigo_evento === EVENT_CODES.SALARIO);
-                const dsrEvt = eventos.find(e => e.codigo_evento === EVENT_CODES.DSR_HE_DIURNAS);
-                if (heEvent && salaryEvent) {
-                    const heKey = `${funcionarioId}_${heEvent.id}`;
-                    const heData = prev[heKey];
-                    const heQtd = heData?.quantidade || 0;
-                    if (heQtd > 0) {
-                        const newBaseHE = calcBaseHE(prev, eventos, funcionarioId, updated.valor_total);
-                        if (newBaseHE > 0) {
-                            const newValUnit = (newBaseHE / MONTHLY_WORKING_HOURS) * OVERTIME_100_MULTIPLIER;
-                            const newValTotalHE = Math.round((heQtd * newValUnit) * 100) / 100;
-                            cascadeUpdates[heKey] = { ...heData, valor_unitario: newValUnit, valor_total: newValTotalHE };
-                            if (dsrEvt && diasCalendario.dias_uteis > 0 && diasCalendario.dias_dsr > 0) {
-                                const dsrKey = `${funcionarioId}_${dsrEvt.id}`;
-                                const newDsr = Math.round(((newValTotalHE / diasCalendario.dias_uteis) * diasCalendario.dias_dsr) * 100) / 100;
-                                cascadeUpdates[dsrKey] = { funcionario_id: funcionarioId, evento_id: dsrEvt.id, quantidade: 0, valor_unitario: 0, valor_total: newDsr };
-                            }
-                        }
-                    }
-                }
-            }
-
-            // AUTO-CALC: Rubrica 59 (DSR s/ HE Diurnas) — recalcular se o evento é fonte de HE
-            const isEventoFonteHE = DSR_HE_CONFIG.some(
-                cfg => cfg.ativo && cfg.codigo_evento === event?.codigo_evento
-            );
-            if (isEventoFonteHE) {
-                // Construir o mapa com o valor recém-atualizado para calcular a soma total
-                const prevWithUpdate = { ...prev, [key]: updated };
-                const valorDsr = calcDsrHe(funcionarioId, prevWithUpdate, eventos, diasCalendario.dias_uteis, diasCalendario.dias_dsr);
-                const dsrEvent = eventos.find(e => e.codigo_evento === EVENT_CODES.DSR_HE_DIURNAS);
-                if (dsrEvent) {
-                    const dsrKey = `${funcionarioId}_${dsrEvent.id}`;
-                    const stateA = {
-                        ...prev,
-                        ...cascadeUpdates,
-                        [key]: updated,
-                        [dsrKey]: { funcionario_id: funcionarioId, evento_id: dsrEvent.id, quantidade: 0, valor_unitario: 0, valor_total: valorDsr },
-                    };
-                    // v4.52.11: recalcula INSS após qualquer mudança em proventos
-                    const comINSS = recalcularINSSPara(stateA, eventos, funcionarioId);
-                    // v4.53.0: recalcula IRRF após INSS
-                    const funcDepIr = funcionarios.find(f => f.id === funcionarioId)?.dep_ir ?? 0;
-                    const comIRRF = recalcularIRRFPara(comINSS, eventos, funcionarioId, funcDepIr);
-                    // v4.52.24: recalcula FGTS na hora para refletir as mudanças na tela
-                    return recalcularFGTSTodos(comIRRF, eventos);
-                }
-            }
-
-            const stateB = { ...prev, ...cascadeUpdates, [key]: updated };
-            // v4.52.11: recalcula INSS após qualquer mudança em proventos
-            const comINSS = recalcularINSSPara(stateB, eventos, funcionarioId);
-            // v4.53.0: recalcula IRRF após INSS
-            const funcDepIr = funcionarios.find(f => f.id === funcionarioId)?.dep_ir ?? 0;
-            const comIRRF = recalcularIRRFPara(comINSS, eventos, funcionarioId, funcDepIr);
-            // v4.52.24: recalcula FGTS na hora para refletir as mudanças na tela
-            return recalcularFGTSTodos(comIRRF, eventos);
+            // CASCADE (Bem Vindo v1.2.0): roda a cascata completa — a mesma da carga e do salvar —
+            // em vez de repetir partes dela aqui (faltas → assiduidade/insalubridade/VT, HE 100%/60% → DSR,
+            // horas faltas, INSS, IRRF, FGTS). Só competência ABERTA é editável.
+            const stateB = { ...prev, [key]: updated };
+            return recalcularCascataCompleta(stateB, eventos, funcionarios, diasCalendario.dias_uteis, diasCalendario.dias_dsr, atestados, true);
         });
-    }, [eventos, diasCalendario, atestados]);
+    }, [eventos, funcionarios, diasCalendario, atestados]);
 
     // Salvar todos os lançamentos
     const handleSave = useCallback(async (): Promise<boolean> => {

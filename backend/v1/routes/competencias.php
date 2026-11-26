@@ -71,7 +71,8 @@ elseif ($method == 'POST') {
     $data['status'] = 'ABERTA';
     registrarLog($conn, $authUser['user_id'], 'COMPETENCIA', $data['id'], 'ABERTURA', "Abriu competência {$data['mes']}/{$data['ano']}", $empresa_id);
 
-    // Copia Rubricas 33 (Salário) e 88 (Gratificação) da última competência FECHADA para a nova.
+    // Copia Rubricas 33 (Salário) e 82 (Gratificação de função — Bem Vindo v1.2.0; na Frimelo era a 88)
+    // da última competência FECHADA para a nova.
     $stmt_prev = $conn->prepare("
         SELECT id FROM competencias
         WHERE id_empresa = ? AND status = 'FECHADA'
@@ -99,7 +100,7 @@ elseif ($method == 'POST') {
             JOIN funcionarios  f  ON le.funcionario_id = f.id
             WHERE le.competencia_id = ?
               AND le.id_empresa     = ?
-              AND e.codigo_evento   IN (33, 88)
+              AND e.codigo_evento   IN (33, 82)
               AND (f.data_demissao IS NULL OR f.data_demissao > CURDATE())
         ");
         $stmt_copy->execute([$data['id'], $prev['id'], $empresa_id]);

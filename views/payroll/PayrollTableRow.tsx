@@ -192,7 +192,8 @@ const PayrollTableRow: React.FC<PayrollTableRowProps> = ({
                 // v4.52.11: Rubrica 35 (INSS) travada — auto-calculada pela tabela progressiva
                 const isINSS = ev.codigo_evento === 35;
                 // v4.52.20: Rúbricas do cadastro — travadas, alterar via ficha do funcionário
-                const isCadastroLocked = [62, 833, 1000, 936, 4004, 88].includes(ev.codigo_evento);
+                // Bem Vindo v1.2.0: + Gratificação de função (82) e desconto do VT (816), em % no cadastro
+                const isCadastroLocked = [62, 833, 1000, 936, 4004, 88, 82, 816].includes(ev.codigo_evento);
                 // v4.52.21: FGTS Visual (1900) travada — informativo para o empregador
                 const isFGTSVisual = ev.codigo_evento === 1900;
                 // v4.53.0: Rubrica 1920 (IRRF) travada — auto-calculada pela tabela progressiva + redutor
@@ -200,7 +201,7 @@ const PayrollTableRow: React.FC<PayrollTableRowProps> = ({
 
                 return (
                     <td key={ev.id} className="p-0 border-r border-slate-100 relative group/cell">
-                        {[49, 719, 1080].includes(ev.codigo_evento) && (
+                        {[49, 37, 719, 1080].includes(ev.codigo_evento) && (
                             <span className="absolute -top-2 left-1 z-10 bg-indigo-100 text-indigo-700 text-[8px] font-bold px-1.5 py-0.5 rounded shadow-sm opacity-0 group-hover/cell:opacity-100 transition-opacity">Base DSR</span>
                         )}
                         {ev.codigo_evento === 59 && (

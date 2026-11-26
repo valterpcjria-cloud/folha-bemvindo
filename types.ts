@@ -50,7 +50,10 @@ export interface Funcionario {
   mensalidade_sindical?: number;    // v4.52.20: valor fixo R$ mensalidade sindical
   emprestimo_consignado?: number;   // v4.52.20: valor fixo R$ empréstimo consignado
   dep_ir?: number;                  // v4.53.x: número de dependentes para dedução IRRF
-  gratificacao?: number;            // v4.53.10: valor fixo R$ gratificação
+  gratificacao?: number;            // v4.53.10: valor fixo R$ gratificação (Frimelo; rubrica 88 desativada no Bem Vindo)
+  gratificacao_funcao_perc?: number; // Bem Vindo v1.2.0: % gratificação de função (82) sobre o salário
+  vt_desconto_perc?: number;         // Bem Vindo v1.2.0: % desconto do VT (816), 0 a 6
+  vt_custo_mensal?: number;          // Bem Vindo v1.2.0: custo mensal do VT fornecido (teto do 816); 0 = sem teto
   // Bem Vindo (Fase A.1): setor/hierarquia, dados pessoais e pagamento
   data_demissao?: string;
   tipo_contrato?: TipoContrato;
@@ -114,6 +117,7 @@ export interface EventoFolha {
   incide_inss?: boolean;
   incide_fgts?: boolean;
   incide_irrf?: boolean;
+  ativo?: number | boolean;  // Bem Vindo v1.2.0: 0 = desativada (fica fora do grid e da exportação)
 }
 
 export interface Competencia {

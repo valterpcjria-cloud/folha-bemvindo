@@ -26,7 +26,8 @@ const ExportView: React.FC = () => {
         console.log("💎 [ExportView] Data loaded:", { comps, evs });
 
         setCompetencias(Array.isArray(comps) ? comps : []);
-        const validEvents = Array.isArray(evs) ? evs : [];
+        // Bem Vindo v1.2.0: rubrica desativada (ex.: Gratificação 88) não entra na exportação para o Questor
+        const validEvents = (Array.isArray(evs) ? evs : []).filter(e => e.ativo === undefined || Number(e.ativo) !== 0);
         setEventos(validEvents);
         setSelectedEventIds(validEvents.map(e => e.id)); // Selecionar todos por padrão
 

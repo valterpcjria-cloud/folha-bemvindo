@@ -8,6 +8,7 @@ import ConfirmModal from '../components/ConfirmModal';
 import { maskBRL, parseBRL, formatBRL } from '../utils/currency';
 import CadastroBemVindoFields from '../components/employees/CadastroBemVindoFields';
 import PagamentoFields from '../components/employees/PagamentoFields';
+import RubricasBemVindoFields from '../components/employees/RubricasBemVindoFields';
 
 const EmployeesView: React.FC = () => {
   const { selectedCompanyId, user } = useAuth();
@@ -64,6 +65,9 @@ const EmployeesView: React.FC = () => {
       mensalidade_sindical: 0,
       emprestimo_consignado: 0,
       gratificacao: 0,
+      gratificacao_funcao_perc: 0, // Bem Vindo v1.2.0
+      vt_desconto_perc: 0,
+      vt_custo_mensal: 0,
       tipo_contrato: 'CLT',
       modalidade_pagamento: 'BANCO'
     });
@@ -511,29 +515,14 @@ const EmployeesView: React.FC = () => {
                       />
                     </div>
                   </div>
+                </div>
 
-                  {/* Gratificação 88 */}
-                  <div className="space-y-1">
-                    <label className="text-xs font-medium text-slate-600 flex items-center gap-1">
-                      <DollarSign size={12} className="text-green-500" />
-                      Gratificação <span className="text-[9px] text-slate-400">(88)</span>
-                    </label>
-                    <div className="relative">
-                      <span className="absolute left-3 top-1/2 -translate-y-1/2 text-xs font-semibold text-slate-500">R$</span>
-                      <input
-                        type="text"
-                        inputMode="numeric"
-                        className="input-clean pl-10 text-right font-mono text-sm"
-                        placeholder="0,00"
-                        value={editingEmployee?.gratificacao ? formatBRL(editingEmployee.gratificacao) : ''}
-                        onChange={(e) => {
-                          const masked = maskBRL(e.target.value);
-                          const numeric = parseBRL(masked);
-                          setEditingEmployee(p => ({ ...p!, gratificacao: numeric }));
-                        }}
-                      />
-                    </div>
-                  </div>
+                {/* Bem Vindo v1.2.0: Gratificação de função (82) e desconto do VT (816). A Gratificação 88 não é usada. */}
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <RubricasBemVindoFields
+                    valor={editingEmployee ?? {}}
+                    onChange={(patch) => setEditingEmployee(p => ({ ...p!, ...patch }))}
+                  />
                 </div>
                 <p className="text-[11px] text-slate-500">
                   Estes valores serão refletidos automaticamente na folha de pagamento. As colunas ficarão travadas (somente leitura) no grid de lançamentos.

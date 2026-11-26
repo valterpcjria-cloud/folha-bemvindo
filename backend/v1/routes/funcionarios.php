@@ -62,6 +62,17 @@ function bvCamposCadastro(PDO $conn, array $data, int $empresa_id, bool $podePag
         $out['tipo_contrato'] = $tc;
     }
 
+    // Bem Vindo v1.2.0: rubricas do cadastro — Gratificação de função (82, %) e desconto do VT (816)
+    $num = function (string $campo, float $max) use ($data, $erro) {
+        $v = $data[$campo] ?? 0;
+        if ($v === '' || $v === null) $v = 0;
+        if (!is_numeric($v) || (float)$v < 0 || (float)$v > $max) $erro("Valor inválido em $campo (0 a $max).");
+        return round((float)$v, 2);
+    };
+    if (array_key_exists('gratificacao_funcao_perc', $data)) $out['gratificacao_funcao_perc'] = $num('gratificacao_funcao_perc', 100);
+    if (array_key_exists('vt_desconto_perc', $data)) $out['vt_desconto_perc'] = $num('vt_desconto_perc', 6);
+    if (array_key_exists('vt_custo_mensal', $data)) $out['vt_custo_mensal'] = $num('vt_custo_mensal', 99999999);
+
     if ($podePagamento) {
         if (array_key_exists('modalidade_pagamento', $data)) {
             $mp = $data['modalidade_pagamento'] ?: 'BANCO';
@@ -96,6 +107,7 @@ if ($method == 'GET') {
     $colsPagamento = $bvPodeVerPagamento ? ", f.modalidade_pagamento, f.banco, f.agencia, f.conta, f.tipo_conta, f.chave_pix" : "";
     $stmt = $conn->prepare("SELECT f.id, f.id_contrato, f.nome, f.cpf, f.cargo, f.status, f.data_admissao, f.data_demissao, f.cbo, f.empresa_codigo, f.local, f.departamento, f.salario_base, f.insalubridade_perc, f.assiduidade_perc, f.adic_tempo_servico_perc, f.mensalidade_sindical, f.emprestimo_consignado, f.gratificacao,
             f.tipo_contrato, f.id_setor, f.id_cargo, f.data_nascimento, f.sexo, f.escolaridade,
+            f.gratificacao_funcao_perc, f.vt_desconto_perc, f.vt_custo_mensal,
             s.nome AS setor_nome, s.ordem AS setor_ordem, c.ordem_hierarquia AS cargo_ordem $colsPagamento
         FROM funcionarios f
         LEFT JOIN setores s ON s.id = f.id_setor AND s.id_empresa = f.id_empresa
