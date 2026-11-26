@@ -3,6 +3,23 @@
 Fork da Folha Frimelo (base v4.58.1) para o Supermercado Bem Vindo. A numeração recomeça em 1.0.0.
 O histórico da Frimelo continua abaixo, a partir de [4.58.1].
 
+## [1.3.0] - 2026-11-26
+
+Relatórios do DP (documento de requisitos, saídas 2, 4 e 5), com os mesmos valores da tela de Lançamentos. Sem mudança no banco.
+
+### Adicionado
+- **Relatórios → bloco "Bem Vindo"**, cada um com exportação em Excel, CSV e PDF:
+  - **Para a Contabilidade**: alfabético, com matrícula, CPF, setor e cargo; horas extras e horas faltas em h:min, faltas e feriado trabalhado em dias, atestado em dias, demais rubricas em R$. INSS, IRRF e DSR ficam de fora (calculados pelo escritório) ou entram como prévia, se marcado.
+  - **Resumo por Setor**: uma coluna por setor + total geral — pessoas, bruto, HE + DSR, descontos, líquido, FGTS (informativo), custo médio por pessoa e total por rubrica.
+  - **Pagamentos**: líquido por modalidade (conta bancária, Pix, loja, não informada), alfabético, com subtotais; dados bancários/Pix só para ADMIN e RH.
+
+### Alterado
+- Cadeia de cálculo da competência extraída para `calcularFolhaCompetencia()` (`hooks/usePayrollData.ts`), usada pelo grid e pelos relatórios: os relatórios incluem o DSR 59, que não é gravado no banco.
+
+### Pendente
+- Validação com dados reais do Bem Vindo (o sistema ainda não está em uso).
+- Adiantamentos, convênios, 13º, férias, rescisão e encargos patronais entram nos relatórios quando a contabilidade confirmar as regras (2ª rodada).
+
 ## [1.2.0] - 2026-11-26
 
 Primeiras regras de cálculo confirmadas pelo escritório de contabilidade (respostas P1–P30, 25/11/2026). Códigos de rubrica = os do Questor.

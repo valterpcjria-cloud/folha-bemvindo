@@ -31,6 +31,7 @@ Tabela histórica completa: `SPEC.md` §16. Ao descobrir uma nova, registre aqui
 | **BV** "Conexão recusada" em localhost:8090 | Túnel SSH fechado | `ssh -N -L 8090:127.0.0.1:8090 luzitec-vps` |
 | **BV** Consulta via `ssh '... -e "..."'` quebra | Aspas aninhadas | Mandar o SQL pelo stdin |
 | **BV** PC sem espaço (0 MB), saídas sumindo | Imagens Docker de rebuilds acumuladas | `docker builder prune -f` + `docker image prune -f` com autorização |
+| **BV** PDF do relatório com `"` no lugar de `−` | jsPDF/helvetica não tem U+2212 | Usar `-` em texto de PDF (v1.3.0) |
 
 ## Hábitos que evitaram problemas
 - Reproduzir conta nova em Python/planilha com exemplo real e mostrar ao Valter.

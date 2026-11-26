@@ -84,3 +84,7 @@ Edição em tempo real: `updateLancamento()` monta `cascadeUpdates` (Faltas→As
 - Backend (`LancamentoService`): força 82 (% × salário), recalcula 37, 49 e 23; 816/INSS/IRRF vêm da tela. `FechamentoService` (fechamento expresso) não foi alinhado.
 - Exemplo conferido: Sal 2.000, 82 10%, insalub 20% c/ 1 falta → 62 = 310,87; HE 60% 10h = 182,61; 23 3h = 27,27; VT 6% = 114,36; DSR (nov/2026: 23 úteis, 7 DSR) = 69,47; INSS 220,00; FGTS 217,17.
 - **Pendente (2ª rodada):** base HE/divisor (E6), insalubridade por função (E7), DSR em faltas/suspensão (E8), códigos (E1), auxílios 859/689/902/687 (E3–E4), bônus 694 (E2), CCT (E5), quebra de caixa 834 / produtividade 566 (B5, B10), salário-família, 13º/férias. Lista de rubricas do cliente: memória `project_bemvindo_planilha`.
+
+## Relatórios (v1.3.0)
+- Todo relatório com valores da folha usa `views/reports/folhaCalculada.ts` → `calcularFolhaCompetencia()` (salário do cadastro → rubricas do cadastro → cascata; fechada = snapshot + 59/1900). Assim bate com o grid. `api.getLancamentos` cru não tem o DSR 59 e, em comp aberta, pode estar desatualizado.
+- Totais = grid: proventos = CREDITO, descontos = DEBITO, 1900 fora.
